@@ -1,0 +1,7 @@
+# dune init project homework_1
+# OCAMLPARAM: unset
+# Shared cache: disabled
+# Shared cache location: /home/nicola/.cache/dune/db
+# Workspace root: "/home/nicola/Scrivania/Magistrale/Language-based technology
+# for security/LBTS-Homework/homework_1"
+# Auto-detected concurrency: 8
