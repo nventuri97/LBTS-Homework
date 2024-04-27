@@ -35,6 +35,11 @@ execWithFailure test_10;; (*deve fallire perchè non esiste un trust mycode1*)
 let test_11= Trust("Mycode", "Rand");;
 execWithFailure test_11;; (* deve fallire perchè esiste già un trust con quel nome*)
 
+let t1 =
+  let secret (x,y) =
+    (*Calculate the position, in an hidden way*)
+  in Trust("MyPosition", t1)
+
 (*Parte della dynamic tainted analysis*)
 
 (*
