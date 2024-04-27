@@ -6,7 +6,7 @@ let rec eval (e : expr) (env : value env) (stack : pstack) : value =
   match e with
   | CstI i -> Int i
   | CstB b -> Int (if b then 1 else 0)
-  | Var x -> lookup env x
+  | Var x -> (lookup env x, taint_lookup env x)
   | Let (x, eRhs, letBody) ->
       let xVal = eval eRhs env stack in
       let letEnv = (x, xVal) :: env in
@@ -30,11 +30,13 @@ let rec eval (e : expr) (env : value env) (stack : pstack) : value =
       | "<", Int i1, Int i2 -> Int (if i1 < i2 then 1 else 0)
       | _ -> failwith "unknown primitive or wrong type")
   | If (e1, e2, e3) -> (
-      match eval e1 env stack with
-      | Int 0 -> eval e3 env stack
-      | Int _ -> eval e2 env stack
-      | _ -> failwith "eval if")
-  | Fun (x, fBody, secSet) -> Closure (x, fBody, secSet, env)
+    let v1, t1 = eval e1 env t in 
+        match v1 with
+        | Bool true -> let v2, t2 = eval e2 env t in (v2, t1 || t2)
+        | Bool false -> let v3, t3 = eval e3 env t in (v3, t1 || t3)
+        | _ -> failwith "eval if")
+  | Fun (x, fBody, secSet) -> (Closure (x, fBody, secSet, env), t)
+    (*This part of the call to a function must be checked, here we have the error*)
   | Call (eFun, eArg) -> (
       let fClosure = eval eFun env stack in
       match fClosure with
@@ -70,3 +72,4 @@ let rec eval (e : expr) (env : value env) (stack : pstack) : value =
       then eval e env stack (* do write *)
       else eval (Abort ("No Write Permission for " ^ f)) env stack
   | Abort msg -> failwith msg
+  | GetInput(e) -> eval e env true
