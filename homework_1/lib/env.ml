@@ -19,5 +19,6 @@ let rec lookup env x =
   | (y, v, _) :: r -> if x = y then v else lookup r x
 
 let rec taint_lookup env x=
+  match env with
   | [] -> failwith (x ^ " not found")
-  | (y, _, t)::r -> if x=y then t else taint_lookup env r
+  | (y, _, t)::r -> if x = y then t else taint_lookup r x

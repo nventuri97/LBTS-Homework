@@ -4,7 +4,7 @@ open Env
 type expr =
   | CstI of int
   | CstB of bool
-  | Var of ide
+  | Var of ide * bool
   | Let of ide * expr * expr
   (* SecLet evaluates the expressions pushing the given pdomain on top of the stack *)
   | SecLet of ide * expr * pdomain * expr
@@ -40,5 +40,8 @@ type expr =
 type value = 
   | Int of int
   | Bool of bool 
-  | Closure of ide * expr * pdomain * value env
+  | Value of value * bool
+  | Closure of ide * expr * pdomain * value env * bool
 (* In a closuer is saved also the pdomain *)
+
+type value_with_taint = Value of value * bool
