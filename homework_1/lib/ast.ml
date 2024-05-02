@@ -1,10 +1,11 @@
 open Security
 open Env
 
+
 type expr =
   | CstI of int
   | CstB of bool
-  | Var of ide
+  | Var of ide * bool
   | Let of ide * expr * expr
   (* SecLet evaluates the expressions pushing the given pdomain on top of the stack *)
   | SecLet of ide * expr * pdomain * expr
@@ -30,10 +31,26 @@ type expr =
     (* Send and evaluates expr to a file iff is allowed otherwise aborts *)
   | SendFile of expr * string
   | Abort of string
+  (*This part of the code is added in order to test the DTA*)
+  | GetInput of expr    (*functions that takes input, taint source*)
+  | Trust_block of trust_content
+  | Include of expr
+  | Execute of ide * expr
+and trust_content =
+  | Let_Secret of ide * expr * trust_content
+  | Let_Public of ide * expr * trust_content
+  | Handle of ide * trust_content
 
-(*
+  (*
   A runtime value is an integer or a function closure
   Boolean are encoded as integers.
 *)
-type value = Int of int | Closure of ide * expr * pdomain * value env
+type value = 
+  | Int of int
+  | Bool of bool 
+  | Value of value * bool
+  | Closure of ide * expr * pdomain * value env * bool
 (* In a closuer is saved also the pdomain *)
+
+type value_with_taint = Value of value * bool
+
