@@ -33,13 +33,14 @@ type expr =
   | Abort of string
   (*This part of the code is added in order to test the DTA*)
   | GetInput of expr    (*functions that takes input, taint source*)
-  | Trust_block of trust_content
-  | Include of expr
+  | TrustBlock of ide * trust_content
+  | Include of ide * expr * expr
   | Execute of ide * expr
 and trust_content =
-  | Let_Secret of ide * expr * trust_content
-  | Let_Public of ide * expr * trust_content
+  | LetSecret of ide * expr * trust_content
+  | LetPublic of ide * expr * trust_content
   | Handle of ide * trust_content
+  | EndTrustBlock
 
   (*
   A runtime value is an integer or a function closure
