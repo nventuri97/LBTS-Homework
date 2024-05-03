@@ -5,7 +5,7 @@ open Security
 let rec eval (e : expr) (env : value env) (t: bool) (stack : pstack): value =
     match e with
     | CstI i -> Int i
-    | CstB b -> Int (if b then 1 else 0)
+    | CstB b -> Bool (if b then true else false)
     | Var (x, t) -> Value (lookup env x, taint_lookup env x)
     | Let (x, eRhs, letBody) ->
         let xVal = eval eRhs env t stack in
