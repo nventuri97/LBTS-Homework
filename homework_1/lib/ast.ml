@@ -1,9 +1,11 @@
 open Security
 open Env
 
+
 type expr =
   | CstI of int
   | CstB of bool
+  | CstString of string
   | Var of ide * bool
   | Let of ide * expr * expr
   (* SecLet evaluates the expressions pushing the given pdomain on top of the stack *)
@@ -32,6 +34,14 @@ type expr =
   | Abort of string
   (*This part of the code is added in order to test the DTA*)
   | GetInput of expr    (*functions that takes input, taint source*)
+  | TrustBlock of ide * trust_content
+  | Include of ide * expr * expr
+  | Execute of expr * expr
+and trust_content =
+  | LetSecret of ide * expr * trust_content
+  | LetPublic of ide * expr * trust_content
+  | Handle of ide * trust_content
+  | EndTrustBlock
 
 (*
   A runtime value is an integer or a function closure
@@ -39,9 +49,11 @@ type expr =
 *)
 type value = 
   | Int of int
-  | Bool of bool 
+  | Bool of bool
+  | String of string 
   | Value of value * bool
   | Closure of ide * expr * pdomain * value env * bool
 (* In a closuer is saved also the pdomain *)
 
 type value_with_taint = Value of value * bool
+
