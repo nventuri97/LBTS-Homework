@@ -1,5 +1,5 @@
-open homework_1.Interpreter
-open homework_1.Security
+open Interpreter
+open Security
 
 let execWithFailure test=
   let value = try eval test with Failure _ -> Int 1 in
