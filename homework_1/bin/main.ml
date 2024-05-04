@@ -1,58 +1,62 @@
 open homework_1.Interpreter
 open homework_1.Security
+(*
+let execWithFailure test env stack =
+  let value = try eval test env stack with Failure _ -> Int 1 in
+  assert (value = Int 1)
 
 (*
+  For testing purpose: test if the evaluation does not fail
+*)
+let execWithoutFailure test env stack =
+  let value = try eval test env stack with Failure _ -> Int 0 in
+  assert (value <> Int 0)
+
+
   let mycode= trust{
     let secret x=0
-    let sum= fun 2 + 3
+    let sum p1 p2= p1+p2 
     handle sum
 }
 *)
-exec_without_failure
+
 Trust_block(
   "MyCode",
   Let_Secret("x", CstI 0),
   Let_Public(
     "sum",
     Fun(
-      Prim("+", CstI 2, CstI 3)
+      "p1", "p2",
+      Prim("+", Var("p1"), Var("p2"))
     )
   ),
-  Handle("sum")
+  Handle("sum"),
+EndTrustBlock
 );
 (*
   let mycode1= trust{
     let secret x=0
-    let f_sum p1 = fun 2 + p1
-    f_sum x
-  } 
-Error: you cant modify secret value, even inside a trust block
+    handle x
+} 
+Error: you cant handle a secret information
 *)
-
-exec_with_failure
 Trust_block(
   "MyCode1",
   Let_Secret("x", CstI 0),
-  Let_Public(
-    "f_sum",
-    Fun(
-      "p1",
-      Prim("+", CstI 2, Var "p1")
-    )
-  )
-  Call(Var "f_sum", Var"x")
+  Handle("x"),
+  EndTrustBlock
 );
 
 (*
 let inc_fun = include{
   let x=2
   let y=3
-  let mult p1 p2= fun p1*p2
+  let mult p1 p2= p1*p2
 }
-execute inc_fun;
+execute(inc_fun.mult, 3, 2);
 *)
-exec_without_failure
 Include(
+  "inc_fun",
   Let("x", CstI 2),
   Let("y", CstI 3),
   Let("mult",
@@ -60,8 +64,22 @@ Include(
       "p1", "p2", 
       Prim("*", Var "p1", Var"p2"))
     )
+Execute("inc_fun.mult", CstI 3, CstI 4);
 )
-Execute("external");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 (*Parte della dynamic tainted analysis*)
 
