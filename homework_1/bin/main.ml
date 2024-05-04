@@ -20,7 +20,7 @@ let execWithoutFailure test env stack =
 }
 *)
 
-Trust_block(
+TrustBlock(
   "MyCode",
   Let_Secret("x", CstI 0),
   Let_Public(
@@ -40,7 +40,7 @@ EndTrustBlock
 } 
 Error: you cant handle a secret information
 *)
-Trust_block(
+TrustBlock(
   "MyCode1",
   Let_Secret("x", CstI 0),
   Handle("x"),
@@ -67,7 +67,7 @@ Include(
 Execute("inc_fun.mult", CstI 3, CstI 4);
 )
 
-
+TrustBlock
 
 
 
