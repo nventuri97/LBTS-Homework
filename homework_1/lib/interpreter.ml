@@ -51,8 +51,7 @@ let rec eval (e : expr) (env : value env) (t: bool) (stack : pstack): value =
             let xVal = eval eArg env t stack in
             let fBodyEnv = (x, xVal, t) :: fDeclEnv in
             let fBodyStack = Grant secSet :: stack in
-  
-          (* fBody is evaluated in the updated stack *)
+            (* fBody is evaluated in the updated stack *)
             eval fBody fBodyEnv t fBodyStack
         | _ -> failwith "eval Call: not a function")
     (* The stuff below are useless for us*)
@@ -81,8 +80,30 @@ let rec eval (e : expr) (env : value env) (t: bool) (stack : pstack): value =
     (*Useful for us*)
     | Abort msg -> failwith msg
     | GetInput(e) -> eval e env true stack
-    | TrustBlock (_, _) -> failwith "Not yet implemented"
-    | Include (_, _, _) -> failwith "Not yet implemented"
+    (*Da ragionare ampiamente insieme*)
+    | TrustBlock (blockName, content) ->
+      (* Aggiungere la logica per gestire TrustBlock qui *)
+      let trustBlockEnv = match content with
+        | LetSecret (x, e, tc) ->
+            let xVal = eval e env t stack in
+            (x, xVal, t) :: env
+        | LetPublic (x, e, tc) ->
+            let xVal = eval e env t stack in
+            (x, xVal, t) :: env
+        | Handle (x, tc) ->
+            (* Aggiungi la logica per gestire Handle qui *)
+            env
+        | EndTrustBlock -> env in
+          (* Chiamare ricorsivamente eval con il contenuto di TrustBlock nell'ambiente aggiornato *)
+            eval (Handle (blockName, content)) trustBlockEnv t stack
+    (*Da ragionare ampiamente insieme*)
+    | Include (blockName, e1, e2) ->
+      (* Aggiungi la logica per gestire Include qui *)
+      let includedEnv = eval e1 env t stack in
+      let includeContent = eval e2 includedEnv t stack in
+      (* Chiamare ricorsivamente eval con il contenuto di Include nell'ambiente aggiornato *)
+      eval includeContent includedEnv t stack
+    (*Da ragionare ampiamente insieme*)
     | Execute (e1, e2) ->
       match eval e1 env t stack with
       | TrustBlock (_,_) -> failwith "Not yet implemented"
