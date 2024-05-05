@@ -67,19 +67,6 @@ Include(
 Execute("inc_fun.mult", CstI 3, CstI 4);
 )
 
-TrustBlock
-
-
-
-
-
-
-
-
-
-
-
-
 
 (*Parte della dynamic tainted analysis*)
 
