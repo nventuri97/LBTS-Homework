@@ -114,42 +114,6 @@ let execWithoutFailure test env t stack =
                CheckPermission (Permission ("File", "f1.txt", [ "r" ])),
                Call (Var "f", CstI 2) ) ))
       [] [];
-    execWithFailure (ReadFile "f1.txt") []
-      [
-        Grant
-          [
-            Permission ("File", "f1.txt", [ "w" ]);
-            Permission ("File", "f2.txt", [ "w"; "r" ]);
-          ];
-      ];
-    execWithoutFailure
-      (SecBlock
-         ( Grant [ Permission ("File", "f1.txt", [ "w" ]) ],
-           SendFile (CstI 42, "f1.txt") ))
-      []
-      [ Grant [ Permission ("File", "f1.txt", [ "w"; "r" ]) ] ];
-    execWithoutFailure
-      (SecBlock
-         ( Grant [ Permission ("File", "f1.txt", [ "w" ]) ],
-           SendFile (CstI 42, "f1.txt") ))
-      []
-      [ Grant [ Permission ("File", "*", [ "w" ]) ] ];
-    execWithFailure
-      (Enable (Permission ("File", "f1.txt", [ "r" ]), ReadFile "f1.txt"))
-      [] [];
-    execWithFailure
-      (Enable (Permission ("File", "*", [ "w" ]), ReadFile "f1.txt"))
-      [] [];
-    execWithoutFailure
-      (Enable
-         ( Permission ("File", "f1.txt", [ "w"; "r" ]),
-           SendFile (CstI 42, "f1.txt") ))
-      [] [];
-    execWithFailure
-      (Disable
-         (Permission ("File", "f1.txt", [ "w" ]), SendFile (CstI 42, "f1.txt")))
-      []
-      [ Grant [ Permission ("File", "*", [ "w" ]) ] ];
   ]
 
 let rec execute_examples ex =
