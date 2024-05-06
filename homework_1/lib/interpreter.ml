@@ -8,9 +8,13 @@ let rec eval (e : expr) (env : value env) (stack : stack): value =
     | CstString s -> String s
     (* | Var (x, _) -> Value (lookup env x, taint_lookup env x) *)
     | Var (x) -> lookup env x
+    | Assign(x, exprAssBody) ->
+        let xVal = eval exprAssBody env stack in
+        let letenv = (x,xVal)::env in 
+          eval exprAssBody letenv stack
     | Let (x, exprRight, letBody) ->
         let xVal = eval exprRight env stack in
-          let letEnv = (x, xVal) :: env in
+        let letEnv = (x, xVal) :: env in
             eval letBody letEnv stack
     | Prim (ope, e1, e2) -> (
         match (eval e1 env stack, eval e2 env stack) with
@@ -24,6 +28,12 @@ let rec eval (e : expr) (env : value env) (stack : stack): value =
             | ">" -> (Bool (i1 > i2))
             | _ -> failwith "Unknown operator or wrong types for operation"
           )
+        | ((Bool b1), (Bool b2))->(
+          match ope with
+            | "||"-> (Bool(b1||b2))
+            | "&&"-> (Bool(b1&&b2))
+            | _ -> failwith "Unknown operator or wrong types for operation"
+        )
         | _ -> failwith "Prim expects two integer arguments"
       ) 
     | If (e1, e2, e3) -> (
@@ -48,7 +58,7 @@ let rec eval (e : expr) (env : value env) (stack : stack): value =
     | Abort msg -> failwith msg
     | GetInput(e) -> eval e env stack
     (*Da ragionare ampiamente insieme*)
-    | TrustBlock (_, _) -> failwith "Not yet implemented"
+    | TrustBlock (_) -> failwith "Not yet implemented"
       (* Aggiungere la logica per gestire TrustBlock qui *)
       (* let trustBlockEnv = match content with
         | LetSecret (x, e, tc) ->

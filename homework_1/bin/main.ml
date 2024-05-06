@@ -84,19 +84,39 @@ Execute("inc_fun.mult", CstI 3, CstI 4);
 let execWithoutFailure test env t stack =
    eval test env t stack ;; *)
 
-   let env = [];;
-   let stack = [];;
-   
-   let example = eval 
-     (Let("x", CstI 3, 
-          Prim("+", Var("x"), CstI 1)
-         )
-     ) env stack;;
-   print_eval(example)
-   
+let env = [];;
+let stack = [];;
+
+let example = eval (
+ Let("x", CstI 3, 
+    Prim("*", Var("x"), CstI 8)
+    )
+    ) env stack;;
+print_eval(example)
+let example1 = eval (
+ Assign("x", CstB true)
+    ) env stack;;
+print_eval(example1)
+
+   (*
+let example1 = eval(
+NewLet("myCode",
+  TrustBlock(
+    LetSecret("x", CstI 0),
+    LetPublic("sum",
+      Fun(
+        "p1", "p2",
+        Prim("+", Var("p1"), Var("p2"))
+      )
+    ),
+    Handle("sum", EndTrustBlock)
+  )
+)
+)env stack;; 
+print_eval(example1);;
 
 
-(* let examples =
+ let examples =
   [
     execWithFailure
       (SecLet

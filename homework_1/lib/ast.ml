@@ -1,13 +1,12 @@
 open Env
-
-
 type expr =
   | CstI of int
   | CstB of bool
   | CstString of string
   (* | Var of ide * bool *)
   | Var of ide
-  | Let of ide * expr * expr
+  | Assign of ide * expr (*let x=...*)
+  | Let of ide * expr * expr (*let x= x in...*)
   | Prim of ide * expr * expr
   | If of expr * expr * expr
   (* Lambda: parameters, body and permission domain *)
@@ -16,7 +15,7 @@ type expr =
   | Abort of string
   (*This part of the code is added in order to test the DTA*)
   | GetInput of expr    (*functions that takes input, taint source*)
-  | TrustBlock of ide * trust_content
+  | TrustBlock of trust_content
   | Include of ide * expr * expr
   | Execute of expr * expr
 and trust_content =
