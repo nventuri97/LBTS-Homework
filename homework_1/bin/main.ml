@@ -1,5 +1,5 @@
-open homework_1.Interpreter
-open homework_1.Security
+open Homework_1.Interpreter
+(* open Homework_1.Security *)
 (*
 let execWithFailure test env stack =
   let value = try eval test env stack with Failure _ -> Int 1 in
@@ -20,7 +20,7 @@ let execWithoutFailure test env stack =
 }
 *)
 
-TrustBlock(
+(* TrustBlock(
   "MyCode",
   Let_Secret("x", CstI 0),
   Let_Public(
@@ -65,27 +65,38 @@ Include(
       Prim("*", Var "p1", Var"p2"))
     )
 Execute("inc_fun.mult", CstI 3, CstI 4);
-)
+) *)
 
 
 (*Parte della dynamic tainted analysis*)
 
-(*
-MAIN del professore, per ora lasciamolo qua
-  For testing purpose: test if the evaluation fails
 
-let execWithFailure test env stack =
+(* MAIN del professore, per ora lasciamolo qua
+  For testing purpose: test if the evaluation fails *)
+
+(* let execWithFailure test env stack =
   let value = try eval test env stack with Failure _ -> Int 1 in
-  assert (value = Int 1)
+  assert (value = Int 1) *)
 
 (*
   For testing purpose: test if the evaluation does not fail
-*)
-let execWithoutFailure test env stack =
-  let value = try eval test env stack with Failure _ -> Int 0 in
-  assert (value <> Int 0)
+(* *)
+let execWithoutFailure test env t stack =
+   eval test env t stack ;; *)
 
-let examples =
+   let env = [];;
+   let stack = [];;
+   
+   let example = eval 
+     (Let("x", CstI 3, 
+          Prim("+", Var("x"), CstI 1)
+         )
+     ) env stack;;
+   print_eval(example)
+   
+
+
+(* let examples =
   [
     execWithFailure
       (SecLet
@@ -149,5 +160,4 @@ let rec execute_examples ex =
       x;
       execute_examples t
 
-let () = execute_examples examples
-*)
+let () = execute_examples examples *)
