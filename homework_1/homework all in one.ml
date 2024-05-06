@@ -249,6 +249,35 @@ let test_assign = eval (
   ) env stack;;
 print_eval(test_assign)
 
+let test_if = eval (
+    Let("x", CstI 3, 
+        Let("y", CstI 5,
+            If(Prim(">", Var("x"), Var("y")),
+               CstB true,
+               CstB false
+              )
+           )
+       )
+  ) env stack;;
+
+print_eval(test_if)
+
+let test_fun_call = eval (
+    Let(
+      "sumXY", 
+      Fun("x", 
+          Fun("y",
+              Prim("+", Var("x"), Var("y"))
+             )
+         ), 
+      Call(
+        Call(Var("sumXY"),
+             CstI 2), 
+        CstI 0)
+    )
+  ) env stack;;
+
+  
    (*
 let example1 = eval(
 NewLet("myCode",
