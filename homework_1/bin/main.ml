@@ -1,26 +1,14 @@
 open Homework_1.Interpreter
 (* open Homework_1.Security *)
-(*
-let execWithFailure test env stack =
-  let value = try eval test env stack with Failure _ -> Int 1 in
-  assert (value = Int 1)
 
 (*
-  For testing purpose: test if the evaluation does not fail
-*)
-let execWithoutFailure test env stack =
-  let value = try eval test env stack with Failure _ -> Int 0 in
-  assert (value <> Int 0)
-
-
-  let mycode= trust{
+let mycode= trust{
     let secret x=0
     let sum p1 p2= p1+p2 
     handle sum
 }
-*)
 
-(* TrustBlock(
+ TrustBlock(
   "MyCode",
   Let_Secret("x", CstI 0),
   Let_Public(
@@ -33,13 +21,11 @@ let execWithoutFailure test env stack =
   Handle("sum"),
 EndTrustBlock
 );
-(*
   let mycode1= trust{
     let secret x=0
     handle x
 } 
 Error: you cant handle a secret information
-*)
 TrustBlock(
   "MyCode1",
   Let_Secret("x", CstI 0),
@@ -109,34 +95,3 @@ NewLet("myCode",
 )
 )env stack;; 
 print_eval(example1);;
-
-
- let examples =
-  [
-    execWithFailure
-      (SecLet
-         ( "f",
-           Fun
-             ( "x",
-               Prim ("+", Var "x", CstI 1),
-               [ Permission ("File", "f1.txt", [ "w" ]) ] ),
-           [
-             Permission ("File", "f1.txt", [ "w" ]);
-             Permission ("File", "f2.txt", [ "w"; "r" ]);
-           ],
-           Let
-             ( "_",
-               CheckPermission (Permission ("File", "f1.txt", [ "r" ])),
-               Call (Var "f", CstI 2) ) ))
-      [] [];
-  ]
-
-let rec execute_examples ex =
-  print_endline "Running test case";
-  match ex with
-  | [] -> print_endline "Done"
-  | x :: t ->
-      x;
-      execute_examples t
-
-let () = execute_examples examples *)
