@@ -65,25 +65,16 @@ Include(
       Prim("*", Var "p1", Var"p2"))
     )
 Execute("inc_fun.mult", CstI 3, CstI 4);
-) *)
-
-
-(*Parte della dynamic tainted analysis*)
-
-
-(* MAIN del professore, per ora lasciamolo qua
-  For testing purpose: test if the evaluation fails *)
-
-(* let execWithFailure test env stack =
-  let value = try eval test env stack with Failure _ -> Int 1 in
-  assert (value = Int 1) *)
-
-(*
-  For testing purpose: test if the evaluation does not fail
-(* *)
-let execWithoutFailure test env t stack =
-   eval test env t stack ;; *)
-
+) 
+  *)
+  let execWithFailure test env stack =
+    try
+      let result = eval test env stack in
+      (* Convertire il risultato in value per usare print_eval *)
+      result
+    with Failure msg -> 
+      String ("Error: " ^ msg)
+  
 let env = [];;
 let stack = [];;
 
@@ -93,12 +84,16 @@ let example = eval (
     )
     ) env stack;;
 print_eval(example)
-let example1 = eval (
- Assign("x", CstB true)
-    ) env stack;;
+
+
+let example1 = execWithFailure (
+  Let("x", CstI 3, 
+  Prim("*",  Var("x"), Var("y"))
+  )
+  ) env stack;;
 print_eval(example1)
 
-   (*
+(*   
 let example1 = eval(
 NewLet("myCode",
   TrustBlock(

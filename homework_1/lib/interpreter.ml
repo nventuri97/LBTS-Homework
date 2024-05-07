@@ -1,6 +1,15 @@
 open Ast
 open Env
 
+
+(*eval used to evaluate the trustContent of a trust block
+let rec evalTrust (tc : trustContent) (env : value env) (stack : stack): value =
+  match d with
+    | LetPublic
+    | LetSecret
+    | Handle
+    | EndTrustBlock
+*)
 let rec eval (e : expr) (env : value env) (stack : stack): value =
     match e with
     | CstI i -> Int i
@@ -58,19 +67,8 @@ let rec eval (e : expr) (env : value env) (stack : stack): value =
     | Abort msg -> failwith msg
     | GetInput(e) -> eval e env stack
     (*Da ragionare ampiamente insieme*)
-    | TrustBlock trustC -> 
-      match trustC with
-      | LetSecret (idLS, exp, body) -> 
-        let addsec = idLS :: (getSecret env) in  (*getsecret e gethandle prendono un env e ritornano la lista di ide secret e ide handle*)
-          let xVal = eval exp env stack in 
-            let letenv = (idLS,xVal)::env in 
-              eval body letenv stack
-      | LetPublic -> failwith "error"
-      | Handle -> failwith "error"
-      | EndTrustBlock -> failwith "error"
-      | _ -> failwith "error"
-      
-      (* | _ failwith "Not yet implemented"
+    | TrustBlock (_, _) -> failwith "Not yet implemented"(*  
+       
         Aggiungere la logica per gestire TrustBlock qui *)
       (* let trustBlockEnv = match content with
         | LetSecret (x, e, tc) ->
@@ -97,11 +95,18 @@ let rec eval (e : expr) (env : value env) (stack : stack): value =
       (* match eval e1 env t stack with
       | TrustBlock (_,_) -> failwith "Not yet implemented"
       | Include (_, _, _) -> failwith "Not yet implemented"
-      | _ -> failwith "Impossible to execute" *)
+      | _ -> failwith "Impossible to execute"
 
 let print_eval (ris : value) = (*Just to display on the terminal the evaluation result*)
 	match ris with
 		| Int(u) -> Printf.printf "evT = Int %d\n" u
 		| Bool(u) -> Printf.printf "evT = Bool %b\n" u
 		| String(u) -> Printf.printf "evT = Str %s\n" u
-		| _ -> Printf.printf "Closure\n";;
+		| _ -> Printf.printf "Closure\n";; *)
+    let print_eval (ris : value) =
+      match ris with
+        | Int(u) -> Printf.printf "evT = Int %d\n" u
+        | Bool(u) -> Printf.printf "evT = Bool %b\n" u
+        | String(u) -> Printf.printf "evT = Str %s\n" u
+        | _ -> Printf.printf "Closure\n"
+    
