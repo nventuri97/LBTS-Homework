@@ -84,17 +84,15 @@ Execute("inc_fun.mult", CstI 3, CstI 4);
 let execWithoutFailure test env t stack =
    eval test env t stack ;; *)
 
-   let env = [];;
-   let stack = [];;
-   
-   let example = eval 
-     (Let("x", CstI 3, 
-          Prim("+", Var("x"), CstI 1)
-         )
-     ) env stack;;
-   print_eval(example)
-   
+let env = [];;
+let stack = [];;
 
+let example = eval 
+  (Let("x", CstI 3, 
+      Prim("+", Var("x"), CstI 1)
+      )
+  ) env stack;;
+print_eval(example)
 
 (* let examples =
   [
