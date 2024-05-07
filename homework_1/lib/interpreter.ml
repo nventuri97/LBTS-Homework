@@ -58,8 +58,20 @@ let rec eval (e : expr) (env : value env) (stack : stack): value =
     | Abort msg -> failwith msg
     | GetInput(e) -> eval e env stack
     (*Da ragionare ampiamente insieme*)
-    | TrustBlock (_) -> failwith "Not yet implemented"
-      (* Aggiungere la logica per gestire TrustBlock qui *)
+    | TrustBlock trustC -> 
+      match trustC with
+      | LetSecret (idLS, exp, body) -> 
+        let addsec = idLS :: (getSecret env) in  (*getsecret e gethandle prendono un env e ritornano la lista di ide secret e ide handle*)
+          let xVal = eval exp env stack in 
+            let letenv = (idLS,xVal)::env in 
+              eval body letenv stack
+      | LetPublic -> failwith "error"
+      | Handle -> failwith "error"
+      | EndTrustBlock -> failwith "error"
+      | _ -> failwith "error"
+      
+      (* | _ failwith "Not yet implemented"
+        Aggiungere la logica per gestire TrustBlock qui *)
       (* let trustBlockEnv = match content with
         | LetSecret (x, e, tc) ->
             let xVal = eval e env t stack in

@@ -15,13 +15,13 @@ type expr =
   | Abort of string
   (*This part of the code is added in order to test the DTA*)
   | GetInput of expr    (*functions that takes input, taint source*)
-  | TrustBlock of trust_content
+  | TrustBlock of ide * trustContent
   | Include of ide * expr * expr
   | Execute of expr * expr
-and trust_content =
-  | LetSecret of ide * expr * trust_content
-  | LetPublic of ide * expr * trust_content
-  | Handle of ide * trust_content
+and trustContent =
+  | LetSecret of ide * expr * trustContent
+  | LetPublic of ide * expr * trustContent
+  | Handle of ide * trustContent
   | EndTrustBlock
 
 (*
