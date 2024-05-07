@@ -87,14 +87,36 @@ let execWithoutFailure test env t stack =
 let env = [];;
 let stack = [];;
 
-let example = eval 
-  (Let("x", CstI 3, 
-      Prim("+", Var("x"), CstI 1)
-      )
-  ) env stack;;
+let example = eval (
+ Let("x", CstI 3, 
+    Prim("*", Var("x"), CstI 8)
+    )
+    ) env stack;;
 print_eval(example)
+let example1 = eval (
+ Assign("x", CstB true)
+    ) env stack;;
+print_eval(example1)
 
-(* let examples =
+   (*
+let example1 = eval(
+NewLet("myCode",
+  TrustBlock(
+    LetSecret("x", CstI 0),
+    LetPublic("sum",
+      Fun(
+        "p1", "p2",
+        Prim("+", Var("p1"), Var("p2"))
+      )
+    ),
+    Handle("sum", EndTrustBlock)
+  )
+)
+)env stack;; 
+print_eval(example1);;
+
+
+ let examples =
   [
     execWithFailure
       (SecLet
@@ -112,42 +134,6 @@ print_eval(example)
                CheckPermission (Permission ("File", "f1.txt", [ "r" ])),
                Call (Var "f", CstI 2) ) ))
       [] [];
-    execWithFailure (ReadFile "f1.txt") []
-      [
-        Grant
-          [
-            Permission ("File", "f1.txt", [ "w" ]);
-            Permission ("File", "f2.txt", [ "w"; "r" ]);
-          ];
-      ];
-    execWithoutFailure
-      (SecBlock
-         ( Grant [ Permission ("File", "f1.txt", [ "w" ]) ],
-           SendFile (CstI 42, "f1.txt") ))
-      []
-      [ Grant [ Permission ("File", "f1.txt", [ "w"; "r" ]) ] ];
-    execWithoutFailure
-      (SecBlock
-         ( Grant [ Permission ("File", "f1.txt", [ "w" ]) ],
-           SendFile (CstI 42, "f1.txt") ))
-      []
-      [ Grant [ Permission ("File", "*", [ "w" ]) ] ];
-    execWithFailure
-      (Enable (Permission ("File", "f1.txt", [ "r" ]), ReadFile "f1.txt"))
-      [] [];
-    execWithFailure
-      (Enable (Permission ("File", "*", [ "w" ]), ReadFile "f1.txt"))
-      [] [];
-    execWithoutFailure
-      (Enable
-         ( Permission ("File", "f1.txt", [ "w"; "r" ]),
-           SendFile (CstI 42, "f1.txt") ))
-      [] [];
-    execWithFailure
-      (Disable
-         (Permission ("File", "f1.txt", [ "w" ]), SendFile (CstI 42, "f1.txt")))
-      []
-      [ Grant [ Permission ("File", "*", [ "w" ]) ] ];
   ]
 
 let rec execute_examples ex =
