@@ -51,18 +51,31 @@ Include(
       Prim("*", Var "p1", Var"p2"))
     )
 Execute("inc_fun.mult", CstI 3, CstI 4);
-) 
   *)
-  let execWithFailure test env stack =
-    try
-      let result = eval test env stack in
-      (* Convertire il risultato in value per usare print_eval *)
-      result
-    with Failure msg -> 
-      String ("Error: " ^ msg)
-  
+
+let execWithFailure test env stack =
+  try
+    let result = eval test env stack in
+    (* Convertire il risultato in value per usare print_eval *)
+    result
+  with Failure msg -> 
+    String ("Error: " ^ msg)
 let env = [];;
 let stack = [];;
+
+let includedCode= eval (Let(
+  "includeFunc",
+  Assign("x", CstI 2),
+  Let("mult", Fun(
+    "p1",
+    Prim(
+      "*",
+      Var "p1",
+      Var "x"
+    )
+  ), Call(Var "mult", CstI 5))  
+)) env stack;;
+print_eval(includedCode)
 
 let example = eval (
  Let("x", CstI 3, 
@@ -95,3 +108,4 @@ NewLet("myCode",
 )
 )env stack;; 
 print_eval(example1);;
+*)

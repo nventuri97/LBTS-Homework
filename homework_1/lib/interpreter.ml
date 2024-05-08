@@ -74,18 +74,30 @@ let rec eval (e : expr) (env : value env) (stack : stack): value =
           (* Chiamare ricorsivamente eval con il contenuto di TrustBlock nell'ambiente aggiornato *)
             eval (Handle (blockName, content)) trustBlockEnv t stack *)
     (*Da ragionare ampiamente insieme*)
-    | Include (_, _, _) -> failwith "Not yet implemented"
+    | Include (id, e1, e2) -> 
       (* Aggiungi la logica per gestire Include qui *)
-      (* let includedEnv = eval e1 env t stack in
-      let includeContent = eval e2 includedEnv t stack in
+      let includedEnv = eval e1 env stack in
+      let updateEnv = (id, includedEnv)::env in
+      (* let includeContent = eval e2 updateEnv stack in *)
       (* Chiamare ricorsivamente eval con il contenuto di Include nell'ambiente aggiornato *)
-      eval includeContent includedEnv t stack *)
+      eval e2 updateEnv stack
     (*Da ragionare ampiamente insieme*)
     | Execute (_, _) -> failwith "Not yet implemented"
       (* match eval e1 env t stack with
       | TrustBlock (_,_) -> failwith "Not yet implemented"
       | Include (_, _, _) -> failwith "Not yet implemented"
       | _ -> failwith "Impossible to execute" *)
+
+let rec evalTrustContent (tc : trust_content) (env : value env) (stack : stack): value =
+  match tc with
+  | LetSecret (id, expr, trustContent) ->
+    let addsec = id::secrets in
+    let xVal = eval exprRight env stack in
+        let letSecretEnv = (x, xVal) :: env in
+            evalTrustContent trustContent letSecretEnv stack
+  | LetPublic (id, expr, trustContent) ->
+  | Handle (id, trustContent) -> 
+  | EndTrustBlock -> env
 
 let print_eval (ris : value) = (*Just to display on the terminal the evaluation result*)
 	match ris with

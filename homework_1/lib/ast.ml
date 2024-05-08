@@ -7,6 +7,7 @@ type expr =
   | CstString of string
   (* | Var of ide * bool *)
   | Var of ide
+  | Assign of ide * expr
   | Let of ide * expr * expr
   | Prim of ide * expr * expr
   | If of expr * expr * expr
