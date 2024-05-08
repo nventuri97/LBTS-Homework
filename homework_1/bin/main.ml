@@ -1,120 +1,97 @@
-open homework_1.Interpreter
-open homework_1.Security
-
-let execWithFailure test=
-  let value = try eval test with Failure _ -> Int 1 in
-  assert (value = Int 1);;
-
-let execWithoutFailure test=
-  let value = try eval test with Failure _ -> Int 0 in
-  assert (value <> Int 0);;
-
-let test_1 = Trust("Mycode","Felix");;
-let test_2= Include("Mycode", "Felix", Secret, (*Operazione1 segreta da aggiungere*));;
-execWithoutFailure test_2;; (*da capire come collegare il risultato della eval a exec without e with failure*)
-let test_3= Include("Mycode", "", Public, (*Operazione2 publica da aggiungere*));;
-execWithoutFailure test_3;; (*non deve fallire*)
-
-let test_4= Include("Mycode", "", Secret, (*Operazione, non è importante quale visto che fallisce*));;
-execWithFailure test_4;; (*DEVE fallire perchè stiamo creando un segreto senza mettere la password*)
-
-let test_5= Include("Mycode", "Sad", Secret, (*Operazione segreta da aggiungere*));;
-execWithFailure test_5;; (*Deve fallire perchè la password è sbagliata*)
-
-let test_6= Execute("Mycode", "Felix", (*Operazione1*));;
-execWithoutFailure test_6;; (*non deve fallire*)
-let test_7= Execute("Mycode", "", (*Operazione2*));;
-execWithoutFailure test_7;; (*non deve fallire perchè è pubblica *)
-let test_8= Execute("Mycode", "", (*Operazione1*));;
-execWithFailure test_8;; (*deve fallire perchè l'operazione1 è dichiarata segreta e non ho messo la password *)
-let test_9= Execute("Mycode", "Sad", (*Operazione1*));;
-execWithFailure test_9;; (* deve fallire per password sbagliata*)
-let test_10= Execute("Mycode1", "", (*Operazione2*));;
-execWithFailure test_10;; (*deve fallire perchè non esiste un trust mycode1*)
-
-let test_11= Trust("Mycode", "Rand");;
-execWithFailure test_11;; (* deve fallire perchè esiste già un trust con quel nome*)
-
-(*Parte della dynamic tainted analysis*)
+open Homework_1.Interpreter
+(* open Homework_1.Security *)
 
 (*
-MAIN del professore, per ora lasciamolo qua
-  For testing purpose: test if the evaluation fails
+let mycode= trust{
+    let secret x=0
+    let sum p1 p2= p1+p2 
+    handle sum
+}
 
-let execWithFailure test env stack =
-  let value = try eval test env stack with Failure _ -> Int 1 in
-  assert (value = Int 1)
+ TrustBlock(
+  "MyCode",
+  Let_Secret("x", CstI 0),
+  Let_Public(
+    "sum",
+    Fun(
+      "p1", "p2",
+      Prim("+", Var("p1"), Var("p2"))
+    )
+  ),
+  Handle("sum"),
+EndTrustBlock
+);
+  let mycode1= trust{
+    let secret x=0
+    handle x
+} 
+Error: you cant handle a secret information
+TrustBlock(
+  "MyCode1",
+  Let_Secret("x", CstI 0),
+  Handle("x"),
+  EndTrustBlock
+);
 
 (*
-  For testing purpose: test if the evaluation does not fail
+let inc_fun = include{
+  let x=2
+  let y=3
+  let mult p1 p2= p1*p2
+}
+execute(inc_fun.mult, 3, 2);
 *)
-let execWithoutFailure test env stack =
-  let value = try eval test env stack with Failure _ -> Int 0 in
-  assert (value <> Int 0)
+Include(
+  "inc_fun",
+  Let("x", CstI 2),
+  Let("y", CstI 3),
+  Let("mult",
+    Fun(
+      "p1", "p2", 
+      Prim("*", Var "p1", Var"p2"))
+    )
+Execute("inc_fun.mult", CstI 3, CstI 4);
+) 
+  *)
+  let execWithFailure test env stack =
+    try
+      let result = eval test env stack in
+      (* Convertire il risultato in value per usare print_eval *)
+      result
+    with Failure msg -> 
+      String ("Error: " ^ msg)
+  
+let env = [];;
+let stack = [];;
 
-let examples =
-  [
-    execWithFailure
-      (SecLet
-         ( "f",
-           Fun
-             ( "x",
-               Prim ("+", Var "x", CstI 1),
-               [ Permission ("File", "f1.txt", [ "w" ]) ] ),
-           [
-             Permission ("File", "f1.txt", [ "w" ]);
-             Permission ("File", "f2.txt", [ "w"; "r" ]);
-           ],
-           Let
-             ( "_",
-               CheckPermission (Permission ("File", "f1.txt", [ "r" ])),
-               Call (Var "f", CstI 2) ) ))
-      [] [];
-    execWithFailure (ReadFile "f1.txt") []
-      [
-        Grant
-          [
-            Permission ("File", "f1.txt", [ "w" ]);
-            Permission ("File", "f2.txt", [ "w"; "r" ]);
-          ];
-      ];
-    execWithoutFailure
-      (SecBlock
-         ( Grant [ Permission ("File", "f1.txt", [ "w" ]) ],
-           SendFile (CstI 42, "f1.txt") ))
-      []
-      [ Grant [ Permission ("File", "f1.txt", [ "w"; "r" ]) ] ];
-    execWithoutFailure
-      (SecBlock
-         ( Grant [ Permission ("File", "f1.txt", [ "w" ]) ],
-           SendFile (CstI 42, "f1.txt") ))
-      []
-      [ Grant [ Permission ("File", "*", [ "w" ]) ] ];
-    execWithFailure
-      (Enable (Permission ("File", "f1.txt", [ "r" ]), ReadFile "f1.txt"))
-      [] [];
-    execWithFailure
-      (Enable (Permission ("File", "*", [ "w" ]), ReadFile "f1.txt"))
-      [] [];
-    execWithoutFailure
-      (Enable
-         ( Permission ("File", "f1.txt", [ "w"; "r" ]),
-           SendFile (CstI 42, "f1.txt") ))
-      [] [];
-    execWithFailure
-      (Disable
-         (Permission ("File", "f1.txt", [ "w" ]), SendFile (CstI 42, "f1.txt")))
-      []
-      [ Grant [ Permission ("File", "*", [ "w" ]) ] ];
-  ]
+let example = eval (
+ Let("x", CstI 3, 
+    Prim("*", Var("x"), CstI 8)
+    )
+    ) env stack;;
+print_eval(example)
 
-let rec execute_examples ex =
-  print_endline "Running test case";
-  match ex with
-  | [] -> print_endline "Done"
-  | x :: t ->
-      x;
-      execute_examples t
 
-let () = execute_examples examples
-*)
+let example1 = execWithFailure (
+  Let("x", CstI 3, 
+  Prim("*",  Var("x"), Var("y"))
+  )
+  ) env stack;;
+print_eval(example1)
+
+(*   
+let example1 = eval(
+NewLet("myCode",
+  TrustBlock(
+    LetSecret("x", CstI 0),
+    LetPublic("sum",
+      Fun(
+        "p1", "p2",
+        Prim("+", Var("p1"), Var("p2"))
+      )
+    ),
+    Handle("sum", EndTrustBlock)
+  )
+)
+)env stack;; 
+print_eval(example1);;
