@@ -1,7 +1,7 @@
 open Ast
 open Env
 
-let rec eval (e : expr) (env : value env) (stack : stack): value =
+let rec eval (e : expr) (env : value env): value =
     match e with
     | CstI i -> Int i
     | CstB b -> Bool (if b then true else false)
@@ -9,15 +9,15 @@ let rec eval (e : expr) (env : value env) (stack : stack): value =
     (* | Var (x, _) -> Value (lookup env x, taint_lookup env x) *)
     | Var (x) -> lookup env x
     | Assign(x, exprAssBody) ->
-        let xVal = eval exprAssBody env stack in
+        let xVal = eval exprAssBody env  in
         let letenv = (x,xVal)::env in 
-          eval exprAssBody letenv stack
+          eval exprAssBody letenv 
     | Let (x, exprRight, letBody) ->
-        let xVal = eval exprRight env stack in
+        let xVal = eval exprRight env  in
         let letEnv = (x, xVal) :: env in
-            eval letBody letEnv stack
+            eval letBody letEnv 
     | Prim (ope, e1, e2) -> (
-        match (eval e1 env stack, eval e2 env stack) with
+        match (eval e1 env , eval e2 env ) with
         | ((Int i1), (Int i2)) -> (
             match ope with
             | "+" -> (Int (i1 + i2))
@@ -37,64 +37,64 @@ let rec eval (e : expr) (env : value env) (stack : stack): value =
         | _ -> failwith "Prim expects two integer arguments"
       ) 
     | If (e1, e2, e3) -> (
-        match eval e1 env stack with
-        | (Bool true) -> eval e2 env stack
-        | (Bool false) -> eval e3 env stack
+        match eval e1 env  with
+        | (Bool true) -> eval e2 env 
+        | (Bool false) -> eval e3 env 
         (* | (_, _) -> failwith "If condition must be a boolean" *)
         | _ -> failwith "Improper use in If condition"
       )
     | Fun (x, fBody) -> (Closure (x, fBody, env))
     (*This part of the call to a function must be checked, here we have the error*)
     | Call (eFun, eArg) -> (
-        let fClosure = eval eFun env stack in
+        let fClosure = eval eFun env  in
         match fClosure with
         | Closure (x, fBody, fDeclEnv) ->
-            (* xVal is evaluated in the current stack *)
-            let xVal = eval eArg env stack in
+            (* xVal is evaluated in the current  *)
+            let xVal = eval eArg env  in
             let fBodyEnv = (x, xVal) :: fDeclEnv in
-              (* fBody is evaluated in the updated stack *)
-              eval fBody fBodyEnv stack
+              (* fBody is evaluated in the updated  *)
+              eval fBody fBodyEnv 
         | _ -> failwith "eval Call: not a function")
     | Abort msg -> failwith msg
-    | GetInput(e) -> eval e env stack
+    | GetInput(e) -> eval e env 
     (*Da ragionare ampiamente insieme*)
     | TrustBlock (_) -> failwith "Not yet implemented"
       (* Aggiungere la logica per gestire TrustBlock qui *)
       (* let trustBlockEnv = match content with
         | LetSecret (x, e, tc) ->
-            let xVal = eval e env t stack in
+            let xVal = eval e env t  in
             (x, xVal, t) :: env
         | LetPublic (x, e, tc) ->
-            let xVal = eval e env t stack in
+            let xVal = eval e env t  in
             (x, xVal, t) :: env
         | Handle (x, tc) ->
             (* Aggiungi la logica per gestire Handle qui *)
             env
         | EndTrustBlock -> env in
           (* Chiamare ricorsivamente eval con il contenuto di TrustBlock nell'ambiente aggiornato *)
-            eval (Handle (blockName, content)) trustBlockEnv t stack *)
+            eval (Handle (blockName, content)) trustBlockEnv t  *)
     (*Da ragionare ampiamente insieme*)
     | Include (id, e1, e2) -> 
       (* Aggiungi la logica per gestire Include qui *)
-      let includedEnv = eval e1 env stack in
+      let includedEnv = eval e1 env  in
       let updateEnv = (id, includedEnv)::env in
-      (* let includeContent = eval e2 updateEnv stack in *)
+      (* let includeContent = eval e2 updateEnv  in *)
       (* Chiamare ricorsivamente eval con il contenuto di Include nell'ambiente aggiornato *)
-      eval e2 updateEnv stack
+      eval e2 updateEnv 
     (*Da ragionare ampiamente insieme*)
     | Execute (_, _) -> failwith "Not yet implemented"
-      (* match eval e1 env t stack with
+      (* match eval e1 env with
       | TrustBlock (_,_) -> failwith "Not yet implemented"
       | Include (_, _, _) -> failwith "Not yet implemented"
       | _ -> failwith "Impossible to execute" *)
 
-let rec evalTrustContent (tc : trust_content) (env : value env) (stack : stack): value =
+let rec evalTrustContent (tc : trust_content) (env : value env): value =
   match tc with
   | LetSecret (id, expr, trustContent) ->
     let addsec = id::secrets in
-    let xVal = eval exprRight env stack in
+    let xVal = eval exprRight env  in
         let letSecretEnv = (x, xVal) :: env in
-            evalTrustContent trustContent letSecretEnv stack
+            evalTrustContent trustContent letSecretEnv 
   | LetPublic (id, expr, trustContent) ->
   | Handle (id, trustContent) -> 
   | EndTrustBlock -> env

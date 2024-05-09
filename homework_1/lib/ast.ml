@@ -37,6 +37,3 @@ type value =
   (* | Value of value * bool *)
   (* | Closure of ide * expr * value env * bool *)
   | Closure of ide * expr * value env
-
-
-type stack = value list
