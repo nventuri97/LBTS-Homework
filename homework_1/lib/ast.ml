@@ -1,4 +1,5 @@
 open Env
+open Security
 
 type expr =
   | CstI of int
@@ -17,7 +18,7 @@ type expr =
   (*This part of the code is added in order to test the DTA*)
   | GetInput of expr    (*functions that takes input, taint source*)
   | TrustBlock of trustContent
-  | Include of ide * expr * expr
+  | Include of ide * expr
   | Execute of expr * expr
 and trustContent =
   | LetSecret of ide * expr * trustContent
@@ -36,4 +37,4 @@ type value =
   (* | Value of value * bool *)
   (* | Closure of ide * expr * value env * bool *)
   | Closure of ide * expr * value env
-  | Block of value env
+  | Block of value trustedEnv

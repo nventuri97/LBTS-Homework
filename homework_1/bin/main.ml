@@ -53,54 +53,61 @@ Include(
 Execute("inc_fun.mult", CstI 3, CstI 4);
 ) 
   *)
-  let execWithFailure test env =
+  let execWithFailure test env list=
     try
-      let result = eval test env in
+      let result = eval test env list in
       (* Convertire il risultato in value per usare print_eval *)
       result
     with Failure msg -> 
       String ("Error: " ^ msg)
   
 let env = [];;
+let list = ([],[],[]);;
 
 let example = eval (
  Let("x", CstI 3, 
     Prim("*", Var("x"), CstI 8)
     )
-    ) env;;
+    ) env list;;
 print_eval(example)
-
 
 let example1 = execWithFailure (
   Let("x", CstI 3, 
   Prim("*",  Var("x"), Var("y"))
   )
-  ) env;;
+  ) env list;;
 print_eval(example1)
 
 let example2 = eval (
   Assign("mytrustB", TrustBlock(
     LetSecret("x", CstI 1, 
-      LetPublic("y", CstI 1,
-        Handle("y", EndTrustBlock)))
+      LetPublic("funy", 
+          Fun("a", 
+            Fun("b",
+              Prim("+", Var("a"), Var("b"))
+         )
+     ),
+    Handle("funy", EndTrustBlock)))
   ) 
-  )) env;;
+  )) env list;;
 print_eval(example2)
-(* 
+
+(*
 let example3 = eval (
   Let(
     "mytrustB", 
     TrustBlock(
       LetSecret("x", CstI 1, 
        LetPublic("y", CstI 1,
-        Handle("y", EndTrustBlock)))),
-      Inlcude(
-        "z", 
+        Handle("y", EndTrustBlock)))
+    ),
+      Include(
+        "fun",Assign("x", CstI 0), 
       )
     )
   )env;;
 print_eval(example3)
-  
+
 let example1 = eval(
 NewLet("myCode",
   TrustBlock(

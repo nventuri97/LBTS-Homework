@@ -2,22 +2,23 @@ open Ast
 open Env
 open Security
 
-let rec evalTrustContent (tc : trustContent) (env : value env) (te : 'v trustedEnv)
+let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trustedEnv)
 (eval :
   expr ->
   value env->
+  value trustedEnv ->
   value) : value =
   match tc with
   | LetSecret (id, exprRight, next) ->
       let addsec = id :: (getSecret te) in
       let newTrustList = build (getTrust te) addsec (getHandle te)  in
-      let id_value = eval exprRight env in
+      let id_value = eval exprRight env te in
       let newEnv = extend env id id_value in
       evalTrustContent next newEnv newTrustList eval
   | LetPublic (id, exprRight, next) ->
     let addtrus = id :: (getTrust te) in
     let newTrustList = build addtrus (getSecret te) (getHandle te)  in
-    let id_value = eval exprRight env in
+    let id_value = eval exprRight env te in
     let newEnv = extend env id id_value in
       evalTrustContent next newEnv newTrustList eval
   | Handle (id, next) -> 
@@ -27,9 +28,9 @@ let rec evalTrustContent (tc : trustContent) (env : value env) (te : 'v trustedE
         let newTrustList = build (getTrust te) (getSecret te) addhandle in
         evalTrustContent next env newTrustList eval
       else failwith "can't add to handle list a variable not trusted"
-  | EndTrustBlock -> Block(env)
+  | EndTrustBlock -> Block(te)
 
-let rec eval (e : expr) (env : value env): value =
+let rec eval (e : expr) (env : value env) (te : value trustedEnv): value =
   match e with
   | CstI i -> Int i
   | CstB b -> Bool (if b then true else false)
@@ -37,15 +38,15 @@ let rec eval (e : expr) (env : value env): value =
     (* | Var (x, _) -> Value (lookup env x, taint_lookup env x) *)
   | Var (x) -> lookup env x
   | Assign(x, exprAssBody) ->
-      let xVal = eval exprAssBody env  in
+      let xVal = eval exprAssBody env te  in
       let letenv = (x,xVal)::env in 
-      eval exprAssBody letenv 
+      eval exprAssBody letenv te
   | Let (x, exprRight, letBody) ->
-      let xVal = eval exprRight env  in
+      let xVal = eval exprRight env te in
       let letEnv = (x, xVal) :: env in
-      eval letBody letEnv 
+      eval letBody letEnv te
   | Prim (ope, e1, e2) -> (
-      match (eval e1 env , eval e2 env ) with
+      match (eval e1 env te, eval e2 env te ) with
       | ((Int i1), (Int i2)) -> (
           match ope with
           | "+" -> (Int (i1 + i2))
@@ -65,43 +66,39 @@ let rec eval (e : expr) (env : value env): value =
       | _ -> failwith "Prim expects two integer arguments"
     ) 
   | If (e1, e2, e3) -> (
-      match eval e1 env  with
-      | (Bool true) -> eval e2 env 
-      | (Bool false) -> eval e3 env 
+      match eval e1 env te with
+      | (Bool true) -> eval e2 env te
+      | (Bool false) -> eval e3 env te
         (* | (_, _) -> failwith "If condition must be a boolean" *)
       | _ -> failwith "Improper use in If condition"
     )
   | Fun (x, fBody) -> (Closure (x, fBody, env))
     (*This part of the call to a function must be checked, here we have the error*)
   | Call (eFun, eArg) -> (
-      let fClosure = eval eFun env  in
+      let fClosure = eval eFun env te in
       match fClosure with
       | Closure (x, fBody, fDeclEnv) ->
             (* xVal is evaluated in the current  *)
-          let xVal = eval eArg env  in
+          let xVal = eval eArg env te in
           let fBodyEnv = (x, xVal) :: fDeclEnv in
               (* fBody is evaluated in the updated  *)
-          eval fBody fBodyEnv 
+          eval fBody fBodyEnv te
       | _ -> failwith "eval Call: not a function")
   | Abort msg -> failwith msg
-  | GetInput(e) -> eval e env 
+  | GetInput(e) -> eval e env te
     (*Da ragionare ampiamente insieme*)
   | TrustBlock (tc) ->
     let newList = build [] [] [] in (*gli passo 3 liste come quelle che abbiamo usato in security*) 
       evalTrustContent tc env newList eval
-  | Include (_, _, _) -> failwith "Not yet implemented"
+  | Include (_, _) -> failwith "Not yet implemented"
   | Execute (_, _) -> failwith "Not yet implemented"
-      (* match eval e1 env with
-      | TrustBlock (_,_) -> failwith "Not yet implemented"
-      | Include (_, _, _) -> failwith "Not yet implemented"
-      | _ -> failwith "Impossible to execute" *)
+      
+
 
 let print_eval (ris : value) = (*Just to display on the terminal the evaluation result*)
-      match ris with
-      | Int(u) -> Printf.printf "evT = Int %d\n" u
-      | Bool(u) -> Printf.printf "evT = Bool %b\n" u
-      | String(u) -> Printf.printf "evT = Str %s\n" u
-      | Block(_) -> Printf.printf "evT = TrustBlock created with SUCCESS!\n"
-      | _ -> Printf.printf "Closure\n";;
-
-      
+match ris with
+| Int(u) -> Printf.printf "evT = Int %d\n" u
+| Bool(u) -> Printf.printf "evT = Bool %b\n" u
+| String(u) -> Printf.printf "evT = Str %s\n" u
+| Block(_) -> Printf.printf "Trust created with SUCCESS\n" 
+| _ -> Printf.printf "Closure\n";;
