@@ -78,14 +78,29 @@ let example1 = execWithFailure (
   ) env;;
 print_eval(example1)
 
-let example2 = execWithFailure (
+let example2 = eval (
   Assign("mytrustB", TrustBlock(
-    LetSecret("x", CstI 1, EndTrustBlock)
+    LetSecret("x", CstI 1, 
+      LetPublic("y", CstI 1,
+        Handle("y", EndTrustBlock)))
   ) 
   )) env;;
 print_eval(example2)
-
-(*   
+(* 
+let example3 = eval (
+  Let(
+    "mytrustB", 
+    TrustBlock(
+      LetSecret("x", CstI 1, 
+       LetPublic("y", CstI 1,
+        Handle("y", EndTrustBlock)))),
+      Inlcude(
+        "z", 
+      )
+    )
+  )env;;
+print_eval(example3)
+  
 let example1 = eval(
 NewLet("myCode",
   TrustBlock(

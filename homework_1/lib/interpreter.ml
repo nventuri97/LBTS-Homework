@@ -14,11 +14,20 @@ let rec evalTrustContent (tc : trustContent) (env : value env) (te : 'v trustedE
       let id_value = eval exprRight env in
       let newEnv = extend env id id_value in
       evalTrustContent next newEnv newTrustList eval
-  | LetPublic (_, _, _) -> failwith "Not yet implemented"
-  | Handle (_, _) -> failwith "Not yet implemented" 
-  (* nella end che cazzo deve fare? *)
-  | EndTrustBlock -> failwith "Not yet implemented endenddnenndne"
- 
+  | LetPublic (id, exprRight, next) ->
+    let addtrus = id :: (getTrust te) in
+    let newTrustList = build addtrus (getSecret te) (getHandle te)  in
+    let id_value = eval exprRight env in
+    let newEnv = extend env id id_value in
+      evalTrustContent next newEnv newTrustList eval
+  | Handle (id, next) -> 
+    if isIn id (getSecret te) then failwith "can't declare handle a secret"
+      else if isIn id (getTrust te) then 
+        let addhandle = id::(getHandle te) in
+        let newTrustList = build (getTrust te) (getSecret te) addhandle in
+        evalTrustContent next env newTrustList eval
+      else failwith "can't add to handle list a variable not trusted"
+  | EndTrustBlock -> Block(env)
 
 let rec eval (e : expr) (env : value env): value =
   match e with
@@ -80,30 +89,7 @@ let rec eval (e : expr) (env : value env): value =
   | TrustBlock (tc) ->
     let newList = build [] [] [] in (*gli passo 3 liste come quelle che abbiamo usato in security*) 
       evalTrustContent tc env newList eval
-      (* failwith "Not yet implemented"
-         Aggiungere la logica per gestire TrustBlock qui *)
-      (* let trustBlockEnv = match content with
-        | LetSecret (x, e, tc) ->
-            let xVal = eval e env t  in
-(x, xVal, t) :: env
-| LetPublic (x, e, tc) ->
-let xVal = eval e env t  in
-(x, xVal, t) :: env
-| Handle (x, tc) ->
-            (* Aggiungi la logica per gestire Handle qui *)
-env
-| EndTrustBlock -> env in
-          (* Chiamare ricorsivamente eval con il contenuto di TrustBlock nell'ambiente aggiornato *)
-eval (Handle (blockName, content)) trustBlockEnv t  *)
-    (*Da ragionare ampiamente insieme*)
-  | Include (_, _) -> failwith "Not yet implemented"
-      (* Aggiungi la logica per gestire Include qui
-      let includedEnv = eval e1 env  in
-      let updateEnv = (id, includedEnv)::env in *)
-      (* let includeContent = eval e2 updateEnv  in *)
-      (* Chiamare ricorsivamente eval con il contenuto di Include nell'ambiente aggiornato 
-      eval e2 updateEnv *)
-    (*Da ragionare ampiamente insieme*)
+  | Include (_, _, _) -> failwith "Not yet implemented"
   | Execute (_, _) -> failwith "Not yet implemented"
       (* match eval e1 env with
       | TrustBlock (_,_) -> failwith "Not yet implemented"
@@ -115,4 +101,7 @@ let print_eval (ris : value) = (*Just to display on the terminal the evaluation 
       | Int(u) -> Printf.printf "evT = Int %d\n" u
       | Bool(u) -> Printf.printf "evT = Bool %b\n" u
       | String(u) -> Printf.printf "evT = Str %s\n" u
+      | Block(_) -> Printf.printf "evT = TrustBlock created with SUCCESS!\n"
       | _ -> Printf.printf "Closure\n";;
+
+      
