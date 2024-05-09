@@ -64,6 +64,7 @@ Execute("inc_fun.mult", CstI 3, CstI 4);
 let env = [];;
 let stack = [];;
 
+
 let example = eval (
  Let("x", CstI 3, 
     Prim("*", Var("x"), CstI 8)
