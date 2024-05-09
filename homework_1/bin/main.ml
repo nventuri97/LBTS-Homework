@@ -53,22 +53,21 @@ Include(
 Execute("inc_fun.mult", CstI 3, CstI 4);
 ) 
   *)
-  let execWithFailure test env stack =
+  let execWithFailure test env =
     try
-      let result = eval test env stack in
+      let result = eval test env in
       (* Convertire il risultato in value per usare print_eval *)
       result
     with Failure msg -> 
       String ("Error: " ^ msg)
   
 let env = [];;
-let stack = [];;
 
 let example = eval (
  Let("x", CstI 3, 
     Prim("*", Var("x"), CstI 8)
     )
-    ) env stack;;
+    ) env;;
 print_eval(example)
 
 
@@ -76,8 +75,15 @@ let example1 = execWithFailure (
   Let("x", CstI 3, 
   Prim("*",  Var("x"), Var("y"))
   )
-  ) env stack;;
+  ) env;;
 print_eval(example1)
+
+let example2 = execWithFailure (
+  Assign("mytrustB", TrustBlock(
+    LetSecret("x", CstI 1, EndTrustBlock)
+  ) 
+  )) env;;
+print_eval(example2)
 
 (*   
 let example1 = eval(
@@ -94,4 +100,4 @@ NewLet("myCode",
   )
 )
 )env stack;; 
-print_eval(example1);;
+print_eval(example1);;*)

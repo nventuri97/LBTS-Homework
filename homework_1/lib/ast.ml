@@ -15,8 +15,8 @@ type expr =
   | Abort of string
   (*This part of the code is added in order to test the DTA*)
   | GetInput of expr    (*functions that takes input, taint source*)
-  | TrustBlock of ide * trustContent
-  | Include of ide * expr * expr
+  | TrustBlock of trustContent
+  | Include of ide * expr
   | Execute of expr * expr
 and trustContent =
   | LetSecret of ide * expr * trustContent
