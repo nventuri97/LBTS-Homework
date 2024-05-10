@@ -2,11 +2,11 @@ open Ast
 open Env
 open Security
 
-let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trustedEnv)
+let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trustedList)
 (eval :
   expr ->
   value env->
-  value trustedEnv ->
+  value trustedList ->
   value) : value =
   match tc with
   | LetSecret (id, exprRight, next) ->
@@ -21,16 +21,16 @@ let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trust
     let id_value = eval exprRight env te in
     let newEnv = extend env id id_value in
       evalTrustContent next newEnv newTrustList eval
-  | Handle (id, next) -> 
+  | Handle (id, next) ->  (*aggiungere il caso in cui quello che chiama la id non utilizzi cose trusted*)
     if isIn id (getSecret te) then failwith "can't declare handle a secret"
       else if isIn id (getTrust te) then 
         let addhandle = id::(getHandle te) in
         let newTrustList = build (getTrust te) (getSecret te) addhandle in
         evalTrustContent next env newTrustList eval
       else failwith "can't add to handle list a variable not trusted"
-  | EndTrustBlock -> Block(te)
+  | EndTrustBlock -> Block("TrustBlock created with success!") 
 
-let rec eval (e : expr) (env : value env) (te : value trustedEnv): value =
+let rec eval (e : expr) (env : value env) (te : value trustedList): value =
   match e with
   | CstI i -> Int i
   | CstB b -> Bool (if b then true else false)
@@ -90,7 +90,7 @@ let rec eval (e : expr) (env : value env) (te : value trustedEnv): value =
   | TrustBlock (tc) ->
     let newList = build [] [] [] in (*gli passo 3 liste come quelle che abbiamo usato in security*) 
       evalTrustContent tc env newList eval
-  | Include (_, _) -> failwith "Not yet implemented"
+  | Include (_, _, _) -> failwith "Not yet implemented"
   | Execute (_, _) -> failwith "Not yet implemented"
       
 
@@ -100,5 +100,5 @@ match ris with
 | Int(u) -> Printf.printf "evT = Int %d\n" u
 | Bool(u) -> Printf.printf "evT = Bool %b\n" u
 | String(u) -> Printf.printf "evT = Str %s\n" u
-| Block(_) -> Printf.printf "Trust created with SUCCESS\n" 
+| Block(u) -> Printf.printf "evT = Str %s\n" u
 | _ -> Printf.printf "Closure\n";;

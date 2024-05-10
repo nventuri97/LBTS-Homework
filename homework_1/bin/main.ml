@@ -93,6 +93,29 @@ let example2 = eval (
 print_eval(example2)
 
 (*
+Dovrebbe essere come far funzionare la include e la execute
+eval(
+  Let("mytrusBlock",
+    TrustBlock(
+      LetSecret("x", CstI 1, 
+      LetPublic("funy", 
+          Fun("a", 
+            Fun("b",
+              Prim("+", Var("a"), Var("b"))
+              )
+          )
+        ), Handle("funy", EndTrustBlock)
+      )
+     ),
+     Include(
+      "myUtrusBlock",
+      Assign("g", CstI 1),
+      Execute(Call(Call(Var "funy", CstI 5), Var "g")
+     )
+     )
+))
+
+
 let example3 = eval (
   Let(
     "mytrustB", 
