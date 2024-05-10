@@ -318,17 +318,20 @@ let test_tBlock = execWithFailure (
 print_eval(test_tBlock)
 
 let test_Include = execWithFailure (
-    Let("x", 
-        Include(Let("a",
-                    CstI 0,
-                    Let("b",
-                        CstI 10,
-                        Assign("b", CstI 100)
+    Let("y", 
+        CstI 54,
+        Let("x", 
+            Include(Let("a",
+                        CstI 0,
+                        Let("b",
+                            CstI 10,
+                            Assign("a", CstI 100)
+                           )
                        )
-                   )
-               ),
+                   ),
         
-        Execute(Var("x"))
+            Call(Var("y"), Var("x"))
+           )
        )
   ) env list;;
 print_eval(test_Include)
