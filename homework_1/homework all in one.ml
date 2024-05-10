@@ -217,7 +217,7 @@ let rec eval (e : expr) (env : value env) (te : value trustedList): value =
       match fClosure with
       | ClosureInclude (fBody, fDeclEnv) ->
           eval fBody fDeclEnv te
-      | _ -> failwith "eval Call: not a function")
+      | _ -> failwith "eval Execute: not a plugin")
 
 
 let print_ide_list ide_list = 
