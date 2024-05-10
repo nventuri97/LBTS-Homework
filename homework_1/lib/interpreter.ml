@@ -2,71 +2,123 @@ open Ast
 open Env
 open Security
 
-let rec eval (e : expr) (env : value env) (stack : pstack) : value =
+let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trustedList)
+    (eval :
+       expr ->
+     value env->
+     value trustedList ->
+     value) : value =
+  match tc with
+  | LetSecret (id, exprRight, next) ->
+      let addsec = id :: (getSecret te) in
+      let newTrustList = build (getTrust te) addsec (getHandle te)  in
+      let id_value = eval exprRight env te in
+      let newEnv = extend env id id_value in
+      evalTrustContent next newEnv newTrustList eval
+  | LetPublic (id, exprRight, next) ->
+      let addtrus = id :: (getTrust te) in
+      let newTrustList = build addtrus (getSecret te) (getHandle te)  in
+      let id_value = eval exprRight env te in
+      let newEnv = extend env id id_value in
+      evalTrustContent next newEnv newTrustList eval
+  | Handle (id, next) ->  (*aggiungere il caso in cui quello che chiama la id non utilizzi cose trusted*)
+      if isIn id (getSecret te) then failwith "can't declare handle a secret"
+      else if isIn id (getTrust te) then 
+        let addhandle = id::(getHandle te) in
+        let newTrustList = build (getTrust te) (getSecret te) addhandle in
+        evalTrustContent next env newTrustList eval
+      else failwith "can't add to handle list a variable not trusted"
+  | EndTrustBlock -> Block("TrustBlock created with success!") 
+                       
+
+let rec eval (e : expr) (env : value env) (te : value trustedList): value =
   match e with
   | CstI i -> Int i
-  | CstB b -> Int (if b then 1 else 0)
-  | Var x -> lookup env x
-  | Let (x, eRhs, letBody) ->
-      let xVal = eval eRhs env stack in
+  | CstB b -> Bool (if b then true else false)
+  | CstString s -> String s
+    (* | Var (x, _) -> Value (lookup env x, taint_lookup env x) *)
+  | Var (x) -> lookup env x
+  | Assign(x, exprAssBody) ->
+      let xVal = eval exprAssBody env te  in
+      let letenv = (x,xVal)::env in 
+      eval exprAssBody letenv te
+  | Let (x, exprRight, letBody) ->
+      let xVal = eval exprRight env te in
       let letEnv = (x, xVal) :: env in
-      eval letBody letEnv stack
-  | SecLet (x, eRhs, secSet, letBody) ->
-      (* xVal is evaluated in the current stack *)
-      let xVal = eval eRhs env stack in
-      let letEnv = (x, xVal) :: env in
-      let letStack = Grant secSet :: stack in
-
-      (* letBody is evaluated in the updated stack *)
-      eval letBody letEnv letStack
+      eval letBody letEnv te
   | Prim (ope, e1, e2) -> (
-      let v1 = eval e1 env stack in
-      let v2 = eval e2 env stack in
-      match (ope, v1, v2) with
-      | "*", Int i1, Int i2 -> Int (i1 * i2)
-      | "+", Int i1, Int i2 -> Int (i1 + i2)
-      | "-", Int i1, Int i2 -> Int (i1 - i2)
-      | "=", Int i1, Int i2 -> Int (if i1 = i2 then 1 else 0)
-      | "<", Int i1, Int i2 -> Int (if i1 < i2 then 1 else 0)
-      | _ -> failwith "unknown primitive or wrong type")
+      match (eval e1 env te, eval e2 env te ) with
+      | ((Int i1), (Int i2)) -> (
+          match ope with
+          | "+" -> (Int (i1 + i2))
+          | "-" -> (Int (i1 - i2))
+          | "*" -> (Int (i1 * i2))
+          | "=" -> (Bool (i1 = i2))
+          | "<" -> (Bool (i1 < i2))
+          | ">" -> (Bool (i1 > i2))
+          | _ -> failwith "Unknown operator or wrong types for operation"
+        )
+      | ((Bool b1), (Bool b2))-> (
+          match ope with
+          | "||" -> (Bool (b1 || b2))
+          | "&&" -> (Bool (b1 && b2))
+          | _ -> failwith "Unknown operator or wrong types for operation"
+        )
+      | _ -> failwith "Prim expects two integer arguments"
+    ) 
   | If (e1, e2, e3) -> (
-      match eval e1 env stack with
-      | Int 0 -> eval e3 env stack
-      | Int _ -> eval e2 env stack
-      | _ -> failwith "eval if")
-  | Fun (x, fBody, secSet) -> Closure (x, fBody, secSet, env)
+      match eval e1 env te with
+      | (Bool true) -> eval e2 env te
+      | (Bool false) -> eval e3 env te
+        (* | (_, _) -> failwith "If condition must be a boolean" *)
+      | _ -> failwith "Improper use in If condition"
+    )
+  | Fun (x, fBody) -> (Closure (x, fBody, env))
+    (*This part of the call to a function must be checked, here we have the error*)
   | Call (eFun, eArg) -> (
-      let fClosure = eval eFun env stack in
+      let fClosure = eval eFun env te in
       match fClosure with
-      | Closure (x, fBody, secSet, fDeclEnv) ->
-          (* xVal is evaluated in the current stack *)
-          let xVal = eval eArg env stack in
+      | Closure (x, fBody, fDeclEnv) ->
+            (* xVal is evaluated in the current  *)
+          let xVal = eval eArg env te in
           let fBodyEnv = (x, xVal) :: fDeclEnv in
-          let fBodyStack = Grant secSet :: stack in
-
-          (* fBody is evaluated in the updated stack *)
-          eval fBody fBodyEnv fBodyStack
+              (* fBody is evaluated in the updated  *)
+          eval fBody fBodyEnv te
       | _ -> failwith "eval Call: not a function")
-  | DemandPermission p -> Int (stackInspection inspect stack p)
-  | OnPermission (p, e) ->
-      if eval (DemandPermission p) env stack = Int 1 then eval e env stack
-      else Int 0
-  | CheckPermission p ->
-      if eval (DemandPermission p) env stack = Int 1 then Int 1
-      else eval (Abort "CheckPermission failed") env stack
-  | Enable (p, e) -> eval e env (Enable p :: stack)
-  | Disable (p, e) -> eval e env (Disable p :: stack)
-  | SecBlock (sec, e) -> eval e env (sec :: stack)
-  | ReadFile f ->
-      if
-        eval (DemandPermission (Permission ("File", f, [ "r" ]))) env stack
-        = Int 1
-      then Int 1 (* do read *)
-      else eval (Abort ("No Read Permission for " ^ f)) env stack
-  | SendFile (e, f) ->
-      if
-        eval (DemandPermission (Permission ("File", f, [ "w" ]))) env stack
-        = Int 1
-      then eval e env stack (* do write *)
-      else eval (Abort ("No Write Permission for " ^ f)) env stack
   | Abort msg -> failwith msg
+  | GetInput(e) -> eval e env te
+    (*Da ragionare ampiamente insieme*)
+  | TrustBlock (tc) ->
+      let newList = build [] [] [] in (*gli passo 3 liste come quelle che abbiamo usato in security*) 
+      evalTrustContent tc env newList eval
+  | Include (iBody) -> (ClosureInclude (iBody, env))
+  | Execute (extCode) -> (
+      let fClosure = eval extCode env te in
+      match fClosure with
+      | ClosureInclude (fBody, fDeclEnv) ->
+          eval fBody fDeclEnv te
+      | _ -> failwith "eval Call: not a function")
+
+
+let print_ide_list ide_list = 
+  List.iter (fun ide -> print_string ide; print_string " ") ide_list;
+  print_newline ()
+    
+let print_trustedEnv (env : 'v trustedList) =
+  let (t, s, h) = env in 
+  print_string "Trusted: ";
+  print_ide_list t;
+  print_string "Secret: ";
+  print_ide_list s;
+  print_string "HandleList: ";
+  print_ide_list h;
+  print_newline ()
+
+      
+let print_eval (ris : value) = (*Just to display on the terminal the evaluation result*)
+  match ris with
+  | Int(u) -> Printf.printf "evT = Int %d\n" u
+  | Bool(u) -> Printf.printf "evT = Bool %b\n" u
+  | String(u) -> Printf.printf "evT = Str %s\n" u
+  | Block(u) -> Printf.printf "evT = %s\n" u
+  | _ -> Printf.printf "Closure\n";;
