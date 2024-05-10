@@ -90,8 +90,16 @@ let rec eval (e : expr) (env : value env) (te : value trustedList): value =
   | TrustBlock (tc) ->
     let newList = build [] [] [] in (*gli passo 3 liste come quelle che abbiamo usato in security*) 
       evalTrustContent tc env newList eval
-  | Include (_, _, _) -> failwith "Not yet implemented"
-  | Execute (_, _) -> failwith "Not yet implemented"
+  | Include (id, expr1, expr2) ->
+     match expr1 with
+     | Include(_, _,_) -> failwith "you cant include inside an include"
+     | TrustBlock(_)-> failwith "you cant create A trustBlock inside an include"
+     | _ ->
+      let v1 = eval expr1 env te in
+        let newEnv= extend env id v1 in
+          eval expr2 newEnv te
+  | Execute (_) -> failwith "Not yet implemented" 
+ 
       
 
 
