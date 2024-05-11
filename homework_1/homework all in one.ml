@@ -211,13 +211,17 @@ let rec eval (e : expr) (env : value env) (te : value trustedList): value =
   | TrustBlock (tc) ->
       let newList = build [] [] [] in (*gli passo 3 liste come quelle che abbiamo usato in security*) 
       evalTrustContent tc env newList eval
-  | Include (iBody) -> (ClosureInclude (iBody, env))
+  | Include (iBody) -> 
+      (match iBody with
+       | Include(_) -> failwith "you cant include inside an include"
+       | TrustBlock(_)-> failwith "you cant create A trustBlock inside an include"
+       | _ -> (ClosureInclude (iBody, env)))
   | Execute (extCode) -> (
       let fClosure = eval extCode env te in
       match fClosure with
       | ClosureInclude (fBody, fDeclEnv) ->
           eval fBody fDeclEnv te
-      | _ -> failwith "eval Execute: not a plugin")
+      | _ -> failwith "eval Call: not a function")
 
 
 let print_ide_list ide_list = 
@@ -317,21 +321,20 @@ let test_tBlock = execWithFailure (
       )) env list;;
 print_eval(test_tBlock)
 
-let test_Include = execWithFailure (
-    Let("y", 
-        CstI 54,
-        Let("x", 
-            Include(Let("a",
-                        CstI 0,
-                        Let("b",
-                            CstI 10,
-                            Assign("a", CstI 100)
-                           )
+let test_Include_Execute = execWithFailure (
+    Let("x", 
+        Include(Let("a",
+                    CstI 0,
+                    Let("b",
+                        CstI 10,
+                        Assign("b", CstI 100)
                        )
-                   ),
-        
-            Call(Var("y"), Var("x"))
+                   )
+               ),
+        Let("z",
+            Execute(Var("x")),
+            Assign("z", Var("x"))
            )
        )
   ) env list;;
-print_eval(test_Include)
+print_eval(test_Include_Execute)
