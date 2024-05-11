@@ -91,7 +91,11 @@ let rec eval (e : expr) (env : value env) (te : value trustedList): value =
   | TrustBlock (tc) ->
       let newList = build [] [] [] in (*gli passo 3 liste come quelle che abbiamo usato in security*) 
       evalTrustContent tc env newList eval
-  | Include (iBody) -> (ClosureInclude (iBody, env))
+  | Include (iBody) -> 
+    (match iBody with
+       | Include(_) -> failwith "you cant include inside an include"
+       | TrustBlock(_)-> failwith "you cant create A trustBlock inside an include"
+       | _ -> (ClosureInclude (iBody, env)))
   | Execute (extCode) -> (
       let fClosure = eval extCode env te in
       match fClosure with
