@@ -3,11 +3,11 @@ open Env
 open Security
 
 let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trustedList)
-(eval :
-  expr ->
-  value env->
-  value trustedList ->
-  value) : value =
+    (eval :
+       expr ->
+     value env->
+     value trustedList ->
+     value) : value =
   match tc with
   | LetSecret (id, exprRight, next) ->
       let addsec = id :: (getSecret te) in
@@ -16,19 +16,20 @@ let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trust
       let newEnv = extend env id id_value in
       evalTrustContent next newEnv newTrustList eval
   | LetPublic (id, exprRight, next) ->
-    let addtrus = id :: (getTrust te) in
-    let newTrustList = build addtrus (getSecret te) (getHandle te)  in
-    let id_value = eval exprRight env te in
-    let newEnv = extend env id id_value in
+      let addtrus = id :: (getTrust te) in
+      let newTrustList = build addtrus (getSecret te) (getHandle te)  in
+      let id_value = eval exprRight env te in
+      let newEnv = extend env id id_value in
       evalTrustContent next newEnv newTrustList eval
   | Handle (id, next) ->  (*aggiungere il caso in cui quello che chiama la id non utilizzi cose trusted*)
-    if isIn id (getSecret te) then failwith "can't declare handle a secret"
+      if isIn id (getSecret te) then failwith "can't declare handle a secret"
       else if isIn id (getTrust te) then 
         let addhandle = id::(getHandle te) in
         let newTrustList = build (getTrust te) (getSecret te) addhandle in
         evalTrustContent next env newTrustList eval
       else failwith "can't add to handle list a variable not trusted"
   | EndTrustBlock -> Block("TrustBlock created with success!") 
+                       
 
 let rec eval (e : expr) (env : value env) (te : value trustedList): value =
   match e with
@@ -57,10 +58,10 @@ let rec eval (e : expr) (env : value env) (te : value trustedList): value =
           | ">" -> (Bool (i1 > i2))
           | _ -> failwith "Unknown operator or wrong types for operation"
         )
-      | ((Bool b1), (Bool b2))->(
+      | ((Bool b1), (Bool b2))-> (
           match ope with
-          | "||"-> (Bool(b1||b2))
-          | "&&"-> (Bool(b1&&b2))
+          | "||" -> (Bool (b1 || b2))
+          | "&&" -> (Bool (b1 && b2))
           | _ -> failwith "Unknown operator or wrong types for operation"
         )
       | _ -> failwith "Prim expects two integer arguments"
@@ -88,25 +89,40 @@ let rec eval (e : expr) (env : value env) (te : value trustedList): value =
   | GetInput(e) -> eval e env te
     (*Da ragionare ampiamente insieme*)
   | TrustBlock (tc) ->
-    let newList = build [] [] [] in (*gli passo 3 liste come quelle che abbiamo usato in security*) 
+      let newList = build [] [] [] in (*gli passo 3 liste come quelle che abbiamo usato in security*) 
       evalTrustContent tc env newList eval
-  | Include (id, expr1, expr2) ->
-     match expr1 with
-     | Include(_, _,_) -> failwith "you cant include inside an include"
-     | TrustBlock(_)-> failwith "you cant create A trustBlock inside an include"
-     | _ ->
-      let v1 = eval expr1 env te in
-        let newEnv= extend env id v1 in
-          eval expr2 newEnv te
-  | Execute (_) -> failwith "Not yet implemented" 
- 
+  | Include (iBody) -> 
+    (match iBody with
+       | Include(_) -> failwith "you cant include inside an include"
+       | TrustBlock(_)-> failwith "you cant create A trustBlock inside an include"
+       | _ -> (ClosureInclude (iBody, env)))
+  | Execute (extCode) -> (
+      let fClosure = eval extCode env te in
+      match fClosure with
+      | ClosureInclude (fBody, fDeclEnv) ->
+          eval fBody fDeclEnv te
+      | _ -> failwith "eval Call: not a function")
+
+
+let print_ide_list ide_list = 
+  List.iter (fun ide -> print_string ide; print_string " ") ide_list;
+  print_newline ()
+    
+let print_trustedEnv (env : 'v trustedList) =
+  let (t, s, h) = env in 
+  print_string "Trusted: ";
+  print_ide_list t;
+  print_string "Secret: ";
+  print_ide_list s;
+  print_string "HandleList: ";
+  print_ide_list h;
+  print_newline ()
+
       
-
-
 let print_eval (ris : value) = (*Just to display on the terminal the evaluation result*)
-match ris with
-| Int(u) -> Printf.printf "evT = Int %d\n" u
-| Bool(u) -> Printf.printf "evT = Bool %b\n" u
-| String(u) -> Printf.printf "evT = Str %s\n" u
-| Block(u) -> Printf.printf "evT = Str %s\n" u
-| _ -> Printf.printf "Closure\n";;
+  match ris with
+  | Int(u) -> Printf.printf "evT = Int %d\n" u
+  | Bool(u) -> Printf.printf "evT = Bool %b\n" u
+  | String(u) -> Printf.printf "evT = Str %s\n" u
+  | Block(u) -> Printf.printf "evT = %s\n" u
+  | _ -> Printf.printf "Closure\n";;

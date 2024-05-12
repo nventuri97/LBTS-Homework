@@ -1,3 +1,4 @@
+
 (*
   Variable identifiers are strings
 *)
@@ -10,7 +11,7 @@ type ide = string
 (* type 'v env = (ide * 'v * bool) list *)
 type 'v env = (ide * 'v) list
 
-(*For extend an environment*)
+(*To extend an environment*)
 let extend (e : 'v env) (id : ide) (v : 'v) : 'v env = (id, v) :: e
 (*
   Given an environment {env} and an identifier {x} it returns the data {x} is bound to.
