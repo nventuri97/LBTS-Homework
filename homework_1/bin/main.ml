@@ -1,5 +1,4 @@
-open homework_1.Interpreter
-open homework_1.Security
+open Homework_1.Interpreter
 
 let execWithFailure test env list=
   try

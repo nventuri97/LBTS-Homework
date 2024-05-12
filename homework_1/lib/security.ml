@@ -1,6 +1,4 @@
-==== BASE ====
-open Utils
-
+open Env 
 (*List that contains all the identificators definied in a trust block to understand
    if an indentificator is defined in a trust block or not*)
 type trusted = ide list
