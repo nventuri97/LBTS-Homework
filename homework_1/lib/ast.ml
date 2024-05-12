@@ -1,4 +1,7 @@
+==== BASE ====
+open Security
 open Env
+==== BASE ====
 
 
 type expr =
@@ -7,8 +10,8 @@ type expr =
   | CstString of string
   (* | Var of ide * bool *)
   | Var of ide
-  | Assign of ide * expr
-  | Let of ide * expr * expr
+  | Assign of ide * expr (*let x=...*)
+  | Let of ide * expr * expr (*let x= x in...*)
   | Prim of ide * expr * expr
   | If of expr * expr * expr
   (* Lambda: parameters, body and permission domain *)
@@ -17,13 +20,13 @@ type expr =
   | Abort of string
   (*This part of the code is added in order to test the DTA*)
   | GetInput of expr    (*functions that takes input, taint source*)
-  | TrustBlock of ide * trust_content
-  | Include of ide * expr * expr
-  | Execute of expr * expr
-and trust_content =
-  | LetSecret of ide * expr * trust_content
-  | LetPublic of ide * expr * trust_content
-  | Handle of ide * trust_content
+  | TrustBlock of trustContent
+  | Include of expr
+  | Execute of expr
+and trustContent =
+  | LetSecret of ide * expr * trustContent
+  | LetPublic of ide * expr * trustContent
+  | Handle of ide * trustContent
   | EndTrustBlock
 
 (*
@@ -37,3 +40,5 @@ type value =
   (* | Value of value * bool *)
   (* | Closure of ide * expr * value env * bool *)
   | Closure of ide * expr * value env
+  | ClosureInclude of expr * value env
+  | Block of string
