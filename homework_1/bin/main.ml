@@ -1,4 +1,6 @@
 open Homework_1.Interpreter
+let env = [];;
+let list = ([],[],[]);; 
 
 let execWithFailure test env list=
   try
@@ -7,10 +9,9 @@ let execWithFailure test env list=
     result
   with Failure msg -> 
     String ("Error: " ^ msg)
-  
-let env = [];;
-let list = ([],[],[]);; 
 
+
+(*
 let test_let_and_prim = execWithFailure (
     Let("x", CstI 3, 
         Prim("*", Var("x"), CstI 8)
@@ -88,3 +89,26 @@ let test_Include = execWithFailure (
        )
   ) env list;;
 print_eval(test_Include)
+
+
+let mytrust = trust{
+  let secret x= 0;
+  let public sum =x;
+  let public h= 10;
+  handle sum; 
+}
+let myInclude = include{
+  let c=1;
+  let d=3;
+  execute(sum, c, d);
+}  
+*)
+
+let test_tBlock1 = execWithFailure (
+    Let("mytrustB", TrustBlock(
+        LetSecret("x", CstI 1,
+                  LetPublic("funy", Var("x"),Handle("funy", EndTrustBlock))
+                            )
+                  ), Var("funy"))
+      ) env list;; (*questo non fa fare l'accesso ne se chiami x ne se chiami funy*)
+print_eval(test_tBlock1)

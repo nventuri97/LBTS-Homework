@@ -1,4 +1,4 @@
-open Env 
+open Env
 (*List that contains all the identificators definied in a trust block to understand
    if an indentificator is defined in a trust block or not*)
 type trusted = ide list
@@ -27,12 +27,13 @@ let getTrust (e : 'v trustedList) : trusted =
     Get the gateways from a trusted environment.
   *)
 let getHandle (e :  'v trustedList) : handleList =
-  let _, handle, _ = e in
+  let _, _, handle = e in
   handle
   
   (*
     Get the secrets from a trusted environment.
   *)
 let getSecret (e : 'v trustedList) : secret =
-  let _, _, secr = e in
+  let _, secr, _ = e in
   secr
+

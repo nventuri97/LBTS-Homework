@@ -1,4 +1,3 @@
-
 (*
   Variable identifiers are strings
 *)

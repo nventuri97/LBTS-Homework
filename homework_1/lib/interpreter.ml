@@ -10,11 +10,12 @@ let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trust
      value) : value =
   match tc with
   | LetSecret (id, exprRight, next) ->
-      let addsec = id :: (getSecret te) in
-      let newTrustList = build (getTrust te) addsec (getHandle te)  in
-      let id_value = eval exprRight env te in
-      let newEnv = extend env id id_value in
-      evalTrustContent next newEnv newTrustList eval
+    let addsec = id :: (getSecret te) in
+    let addTrust = id :: (getTrust te) in
+    let newSeclist = build addTrust addsec (getHandle te) in
+    let id_value = eval exprRight env te in
+    let newEnv = extend env id id_value in
+    evalTrustContent next newEnv newSeclist eval
   | LetPublic (id, exprRight, next) ->
       let addtrus = id :: (getTrust te) in
       let newTrustList = build addtrus (getSecret te) (getHandle te)  in
@@ -37,7 +38,11 @@ let rec eval (e : expr) (env : value env) (te : value trustedList): value =
   | CstB b -> Bool (if b then true else false)
   | CstString s -> String s
     (* | Var (x, _) -> Value (lookup env x, taint_lookup env x) *)
-  | Var (x) -> lookup env x
+  | Var (x) -> 
+    if ( isIn x (getTrust te) && (isIn x (getSecret te)) && not (isIn x (getHandle te))) then 
+      failwith "You are trying to access to a var without permission"
+    else 
+      lookup env x 
   | Assign(x, exprAssBody) ->
       let xVal = eval exprAssBody env te  in
       let letenv = (x,xVal)::env in 
