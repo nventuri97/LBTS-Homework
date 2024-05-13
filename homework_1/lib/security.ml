@@ -1,6 +1,4 @@
-==== BASE ====
-open Utils
-==== BASE ====
+open Env
 
 (*List that contains all the identificators definied in a trust block to understand
    if an indentificator is defined in a trust block or not*)

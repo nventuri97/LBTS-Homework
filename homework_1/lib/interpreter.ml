@@ -37,7 +37,11 @@ let rec eval (e : expr) (env : value env) (te : value trustedList): value =
   | CstB b -> Bool (if b then true else false)
   | CstString s -> String s
     (* | Var (x, _) -> Value (lookup env x, taint_lookup env x) *)
-  | Var (x) -> lookup env x
+  | Var (x) -> 
+    if (isIn x (getTrust te) && not (isIn x (getHandle te))) || isIn x (getSecret te) then
+      failwith "You cannot know value of secret"
+    else
+      lookup env x
   | Assign(x, exprAssBody) ->
       let xVal = eval exprAssBody env te  in
       let letenv = (x,xVal)::env in 
