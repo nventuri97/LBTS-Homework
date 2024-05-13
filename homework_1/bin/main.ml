@@ -136,7 +136,7 @@ let test_TU = eval(
                         CstI 5,
                         Let("b",
                             CstI 8,
-                            Assign("b", AccessTrust(Var("mytrustB"), Var("x"))
+                            Prim("*", Var("b"), AccessTrust(Var("mytrustB"), Var("y"))
                             )
                         )
                       )
