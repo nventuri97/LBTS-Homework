@@ -1,6 +1,5 @@
 open Ast
 open Env
-open Security
 
 let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trustedList)
     (eval :
@@ -13,13 +12,13 @@ let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trust
     let addsec = id :: (getSecret te) in
     let addTrust = id :: (getTrust te) in
     let newSeclist = build addTrust addsec (getHandle te) in
-    let id_value = eval exprRight env te in
+    let id_value = eval exprRight env newSeclist in
     let newEnv = extend env id id_value in
     evalTrustContent next newEnv newSeclist eval
   | LetPublic (id, exprRight, next) ->
       let addtrus = id :: (getTrust te) in
       let newTrustList = build addtrus (getSecret te) (getHandle te)  in
-      let id_value = eval exprRight env te in
+      let id_value = eval exprRight env newTrustList in
       let newEnv = extend env id id_value in
       evalTrustContent next newEnv newTrustList eval
   | Handle (id, next) ->  (*aggiungere il caso in cui quello che chiama la id non utilizzi cose trusted*)
@@ -29,7 +28,7 @@ let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trust
         let newTrustList = build (getTrust te) (getSecret te) addhandle in
         evalTrustContent next env newTrustList eval
       else failwith "can't add to handle list a variable not trusted"
-  | EndTrustBlock -> Block("TrustBlock created with success!") 
+  | EndTrustBlock -> Block("Trustblock created with success")
                        
 
 let rec eval (e : expr) (env : value env) (te : value trustedList): value =
@@ -94,8 +93,8 @@ let rec eval (e : expr) (env : value env) (te : value trustedList): value =
   | GetInput(e) -> eval e env te
     (*Da ragionare ampiamente insieme*)
   | TrustBlock (tc) ->
-      let newList = build [] [] [] in (*gli passo 3 liste come quelle che abbiamo usato in security*) 
-      evalTrustContent tc env newList eval
+      (*let newList = build [] [] [] in gli passo 3 liste come quelle che abbiamo usato in security*) 
+      evalTrustContent tc env te eval
   | Include (iBody) -> 
     (match iBody with
        | Include(_) -> failwith "you cant include inside an include"

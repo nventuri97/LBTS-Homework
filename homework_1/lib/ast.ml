@@ -23,7 +23,7 @@ and trustContent =
   | LetSecret of ide * expr * trustContent
   | LetPublic of ide * expr * trustContent
   | Handle of ide * trustContent
-  | EndTrustBlock
+  | EndTrustBlock 
 
 (*
   A runtime value is an integer or a function closure

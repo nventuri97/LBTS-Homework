@@ -106,9 +106,14 @@ let myInclude = include{
 
 let test_tBlock1 = execWithFailure (
     Let("mytrustB", TrustBlock(
-        LetSecret("x", CstI 1,
-                  LetPublic("funy", Var("x"),Handle("funy", EndTrustBlock))
+        LetSecret("x", 
+                  CstI 1,
+                  LetPublic("funy", 
+                            CstI 8, 
+                            EndTrustBlock)
                             )
-                  ), Var("funy"))
+                  ), 
+        Let("kal", CstI 4 , Prim("*", Var("kal"), Var("funy")))
+        )
       ) env list;; (*questo non fa fare l'accesso ne se chiami x ne se chiami funy*)
 print_eval(test_tBlock1)
