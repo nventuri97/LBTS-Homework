@@ -88,3 +88,60 @@ let test_Include = execWithFailure (
        )
   ) env list;;
 print_eval(test_Include)
+
+
+let mytrust = trust{
+  let secret x= 0;
+  let public sum =x;
+  let public h= 10;
+  handle sum; 
+}
+let myInclude = include{
+  let c=1;
+  let d=3;
+  execute(sum, c, d);
+}  
+
+
+let test_tBlock1 = eval (
+    Let("mytrustB", TrustBlock(
+        LetSecret("x", 
+                  CstI 1,
+                  LetPublic("funy", 
+                            CstI 8,
+                            Handle("funy", EndTrustBlock) )
+                            )
+                  ), 
+        Let("kal", 
+          CstI 4 , 
+          Prim("*", Var("kal"), AccessTrust(Var("mytrustB"), Var("x"))))
+        )
+      ) env list;; (*questo non fa fare l'accesso ne se chiami x ne se chiami funy*)
+print_eval(test_tBlock1)*)
+
+let test_TU = eval(
+  Let("mytrustB", 
+      TrustBlock(
+        LetSecret("x",
+                  CstI 1,
+                  LetPublic(
+                    "y",
+                    CstI 3,
+                    Handle("y", EndTrustBlock)
+                  )
+        )),
+        Let("extCode",
+            Include(Let("a", 
+                        CstI 5,
+                        Let("b",
+                            CstI 8,
+                            Prim("*", Var("b"), AccessTrust(Var("mytrustB"), Var("y"))
+                            )
+                        )
+                      )
+                    ), 
+            Execute(Var("extCode")) 
+          )
+      )
+  ) env list;;
+  print_eval(test_TU)

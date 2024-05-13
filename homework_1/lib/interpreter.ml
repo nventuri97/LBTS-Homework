@@ -1,6 +1,5 @@
 open Ast
 open Env
-open Security
 
 let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trustedList)
     (eval :
@@ -10,16 +9,16 @@ let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trust
      value) : value =
   match tc with
   | LetSecret (id, exprRight, next) ->
-      let addsec = id :: (getSecret te) in
-      let addTrust = id :: (getTrust te) in
-      let newSeclist = build addTrust addsec (getHandle te) in
-      let id_value = eval exprRight env te in
-      let newEnv = extend env id id_value in
-      evalTrustContent next newEnv newSeclist eval
+    let addsec = id :: (getSecret te) in
+    let addTrust = id :: (getTrust te) in
+    let newSeclist = build addTrust addsec (getHandle te) in
+    let id_value = eval exprRight env newSeclist in
+    let newEnv = extend env id id_value in
+    evalTrustContent next newEnv newSeclist eval
   | LetPublic (id, exprRight, next) ->
       let addtrus = id :: (getTrust te) in
       let newTrustList = build addtrus (getSecret te) (getHandle te)  in
-      let id_value = eval exprRight env te in
+      let id_value = eval exprRight env newTrustList in
       let newEnv = extend env id id_value in
       evalTrustContent next newEnv newTrustList eval
   | Handle (id, next) ->  (*aggiungere il caso in cui quello che chiama la id non utilizzi cose trusted*)
@@ -29,7 +28,7 @@ let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trust
         let newTrustList = build (getTrust te) (getSecret te) addhandle in
         evalTrustContent next env newTrustList eval
       else failwith "can't add to handle list a variable not trusted"
-  | EndTrustBlock -> Block("TrustBlock created with success!") 
+  | EndTrustBlock -> Block(te,env)
                        
 
 let rec eval (e : expr) (env : value env) (te : value trustedList): value =
@@ -38,11 +37,18 @@ let rec eval (e : expr) (env : value env) (te : value trustedList): value =
   | CstB b -> Bool (if b then true else false)
   | CstString s -> String s
     (* | Var (x, _) -> Value (lookup env x, taint_lookup env x) *)
-  | Var (x) -> 
-    if (isIn x (getTrust te) && not (isIn x (getHandle te))) || isIn x (getSecret te) then
-      failwith "You cannot know value of secret"
-    else
+  | Var (x) ->
+    if ( isIn x (getTrust te) && 
+          (isIn x (getSecret te) || not (isIn x (getHandle te)))
+        ) then 
+      failwith ( x ^ " is trying to access to a var without permission")
+    else 
       lookup env x
+    (*
+    if ( isIn x (getTrust te) && (isIn x (getSecret te)) || not (isIn x (getHandle te))) then 
+      failwith "You are trying to access to a var without permission"
+    else 
+      lookup env x *)
   | Assign(x, exprAssBody) ->
       let xVal = eval exprAssBody env te  in
       let letenv = (x,xVal)::env in 
@@ -94,8 +100,8 @@ let rec eval (e : expr) (env : value env) (te : value trustedList): value =
   | GetInput(e) -> eval e env te
     (*Da ragionare ampiamente insieme*)
   | TrustBlock (tc) ->
-      let newList = build [] [] [] in (*gli passo 3 liste come quelle che abbiamo usato in security*) 
-      evalTrustContent tc env newList eval
+      (*let newList = build [] [] [] in gli passo 3 liste come quelle che abbiamo usato in security*) 
+      evalTrustContent tc env te eval
   | Include (iBody) -> 
     (match iBody with
        | Include(_) -> failwith "you cant include inside an include"
@@ -107,6 +113,12 @@ let rec eval (e : expr) (env : value env) (te : value trustedList): value =
       | ClosureInclude (fBody, fDeclEnv) ->
           eval fBody fDeclEnv te
       | _ -> failwith "eval Call: not a function")
+  | AccessTrust (ideTrust, ideVar) -> (
+        let trustV = eval ideTrust env te in
+        match trustV with
+        | Block (list,secondEnv) ->
+              eval ideVar secondEnv list
+        | _ -> failwith "the access must be applied to an trustblock")
 
 
 let print_ide_list ide_list = 
@@ -129,5 +141,5 @@ let print_eval (ris : value) = (*Just to display on the terminal the evaluation 
   | Int(u) -> Printf.printf "evT = Int %d\n" u
   | Bool(u) -> Printf.printf "evT = Bool %b\n" u
   | String(u) -> Printf.printf "evT = Str %s\n" u
-  | Block(u) -> Printf.printf "evT = %s\n" u
+  | Block(_,_) -> Printf.printf "evT = ...\n" 
   | _ -> Printf.printf "Closure\n";;
