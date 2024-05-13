@@ -11,10 +11,11 @@ let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trust
   match tc with
   | LetSecret (id, exprRight, next) ->
       let addsec = id :: (getSecret te) in
-      let newTrustList = build (getTrust te) addsec (getHandle te)  in
+      let addTrust = id :: (getTrust te) in
+      let newSeclist = build addTrust addsec (getHandle te) in
       let id_value = eval exprRight env te in
       let newEnv = extend env id id_value in
-      evalTrustContent next newEnv newTrustList eval
+      evalTrustContent next newEnv newSeclist eval
   | LetPublic (id, exprRight, next) ->
       let addtrus = id :: (getTrust te) in
       let newTrustList = build addtrus (getSecret te) (getHandle te)  in

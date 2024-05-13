@@ -28,12 +28,12 @@ let getTrust (e : 'v trustedList) : trusted =
     Get the gateways from a trusted environment.
   *)
 let getHandle (e :  'v trustedList) : handleList =
-  let _, handle, _ = e in
+  let _, _, handle = e in
   handle
   
   (*
     Get the secrets from a trusted environment.
   *)
 let getSecret (e : 'v trustedList) : secret =
-  let _, _, secr = e in
+  let _, secr, _ = e in
   secr
