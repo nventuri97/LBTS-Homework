@@ -28,7 +28,7 @@ let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trust
         let newTrustList = build (getTrust te) (getSecret te) addhandle in
         evalTrustContent next env newTrustList eval
       else failwith "can't add to handle list a variable not trusted"
-  | EndTrustBlock -> Block("Trustblock created with success")
+  | EndTrustBlock -> Block(te,env)
                        
 
 let rec eval (e : expr) (env : value env) (te : value trustedList): value =
@@ -37,11 +37,18 @@ let rec eval (e : expr) (env : value env) (te : value trustedList): value =
   | CstB b -> Bool (if b then true else false)
   | CstString s -> String s
     (* | Var (x, _) -> Value (lookup env x, taint_lookup env x) *)
-  | Var (x) -> 
-    if ( isIn x (getTrust te) && (isIn x (getSecret te)) && not (isIn x (getHandle te))) then 
+  | Var (x) ->
+    if ( isIn x (getTrust te) && 
+          (isIn x (getSecret te) || not (isIn x (getHandle te)))
+        ) then 
+      failwith ( x ^ " is trying to access to a var without permission")
+    else 
+      lookup env x
+    (*
+    if ( isIn x (getTrust te) && (isIn x (getSecret te)) || not (isIn x (getHandle te))) then 
       failwith "You are trying to access to a var without permission"
     else 
-      lookup env x 
+      lookup env x *)
   | Assign(x, exprAssBody) ->
       let xVal = eval exprAssBody env te  in
       let letenv = (x,xVal)::env in 
@@ -106,6 +113,12 @@ let rec eval (e : expr) (env : value env) (te : value trustedList): value =
       | ClosureInclude (fBody, fDeclEnv) ->
           eval fBody fDeclEnv te
       | _ -> failwith "eval Call: not a function")
+  | AccessTrust (ideTrust, ideVar) -> (
+        let trustV = eval ideTrust env te in
+        match trustV with
+        | Block (list,secondEnv) ->
+              eval ideVar secondEnv list
+        | _ -> failwith "the access must be applied to an trustblock")
 
 
 let print_ide_list ide_list = 
@@ -128,5 +141,5 @@ let print_eval (ris : value) = (*Just to display on the terminal the evaluation 
   | Int(u) -> Printf.printf "evT = Int %d\n" u
   | Bool(u) -> Printf.printf "evT = Bool %b\n" u
   | String(u) -> Printf.printf "evT = Str %s\n" u
-  | Block(u) -> Printf.printf "evT = %s\n" u
+  | Block(_,_) -> Printf.printf "evT = ...\n" 
   | _ -> Printf.printf "Closure\n";;

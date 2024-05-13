@@ -1,7 +1,7 @@
 open Homework_1.Interpreter
 let env = [];;
 let list = ([],[],[]);; 
-
+(*
 let execWithFailure test env list=
   try
     let result = eval test env list in
@@ -11,7 +11,7 @@ let execWithFailure test env list=
     String ("Error: " ^ msg)
 
 
-(*
+
 let test_let_and_prim = execWithFailure (
     Let("x", CstI 3, 
         Prim("*", Var("x"), CstI 8)
@@ -102,18 +102,47 @@ let myInclude = include{
   let d=3;
   execute(sum, c, d);
 }  
-*)
 
-let test_tBlock1 = execWithFailure (
+
+let test_tBlock1 = eval (
     Let("mytrustB", TrustBlock(
         LetSecret("x", 
                   CstI 1,
                   LetPublic("funy", 
-                            CstI 8, 
-                            EndTrustBlock)
+                            CstI 8,
+                            Handle("funy", EndTrustBlock) )
                             )
                   ), 
-        Let("kal", CstI 4 , Prim("*", Var("kal"), Var("funy")))
+        Let("kal", 
+          CstI 4 , 
+          Prim("*", Var("kal"), AccessTrust(Var("mytrustB"), Var("x"))))
         )
       ) env list;; (*questo non fa fare l'accesso ne se chiami x ne se chiami funy*)
-print_eval(test_tBlock1)
+print_eval(test_tBlock1)*)
+
+let test_TU = eval(
+  Let("mytrustB", 
+      TrustBlock(
+        LetSecret("x",
+                  CstI 1,
+                  LetPublic(
+                    "y",
+                    CstI 3,
+                    Handle("y", EndTrustBlock)
+                  )
+        )),
+        Let("extCode",
+            Include(Let("a", 
+                        CstI 5,
+                        Let("b",
+                            CstI 8,
+                            Assign("b", AccessTrust(Var("mytrustB"), Var("x"))
+                            )
+                        )
+                      )
+                    ), 
+            Execute(Var("extCode")) 
+          )
+      )
+  ) env list;;
+  print_eval(test_TU)

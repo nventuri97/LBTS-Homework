@@ -18,6 +18,7 @@ type expr =
   | GetInput of expr    (*functions that takes input, taint source*)
   | TrustBlock of trustContent
   | Include of expr
+  | AccessTrust of expr * expr
   | Execute of expr
 and trustContent =
   | LetSecret of ide * expr * trustContent
@@ -37,4 +38,4 @@ type value =
   (* | Closure of ide * expr * value env * bool *)
   | Closure of ide * expr * value env
   | ClosureInclude of expr * value env
-  | Block of string
+  | Block of value trustedList * value env
