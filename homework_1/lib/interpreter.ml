@@ -3,23 +3,25 @@ open Env
 
 let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trustedList)
     (eval :
-       expr ->
-     value env->
-     value trustedList ->
-     value) : value =
+      expr ->
+      value env->
+      bool ->
+      value trustedList ->
+      (*Qui molto probabilmente deve ritornare un value * bool come la eval normale*)
+      value * bool) : value =
   match tc with
   | LetSecret (id, exprRight, next) ->
     let addsec = id :: (getSecret te) in
     let addTrust = id :: (getTrust te) in
     let newSeclist = build addTrust addsec (getHandle te) in
-    let id_value = eval exprRight env newSeclist in
-    let newEnv = extend env id id_value in
+    let (id_value, taintness) = eval exprRight env false newSeclist in
+    let newEnv = extend env id id_value taintness in
     evalTrustContent next newEnv newSeclist eval
   | LetPublic (id, exprRight, next) ->
       let addtrus = id :: (getTrust te) in
       let newTrustList = build addtrus (getSecret te) (getHandle te)  in
-      let id_value = eval exprRight env newTrustList in
-      let newEnv = extend env id id_value in
+      let (id_value, taintness) = eval exprRight env false newTrustList in
+      let newEnv = extend env id id_value taintness in
       evalTrustContent next newEnv newTrustList eval
   | Handle (id, next) ->  (*aggiungere il caso in cui quello che chiama la id non utilizzi cose trusted*)
       if isIn id (getSecret te) then failwith "can't declare handle a secret"
@@ -31,94 +33,97 @@ let rec evalTrustContent (tc : trustContent) (env : value env) (te : value trust
   | EndTrustBlock -> Block(te,env)
                        
 
-let rec eval (e : expr) (env : value env) (te : value trustedList): value =
+let rec eval (e : expr) (env : value env) (t: bool) (te : value trustedList): (value * bool)=
   match e with
-  | CstI i -> Int i
-  | CstB b -> Bool (if b then true else false)
-  | CstString s -> String s
-    (* | Var (x, _) -> Value (lookup env x, taint_lookup env x) *)
+  | CstI i -> (Int i, t)
+  | CstB b -> (Bool b, t)
+  | CstString s -> (String s, t)
   | Var (x) ->
-    if ( isIn x (getTrust te) && 
+    (* if ( isIn x (getTrust te) && 
           (isIn x (getSecret te) || not (isIn x (getHandle te)))
         ) then 
       failwith ( x ^ " is trying to access to a var without permission")
-    else 
-      lookup env x
-    (*
-    if ( isIn x (getTrust te) && (isIn x (getSecret te)) || not (isIn x (getHandle te))) then 
-      failwith "You are trying to access to a var without permission"
-    else 
-      lookup env x *)
+    else  *)
+      (lookup env x, taint_lookup env x)
   | Assign(x, exprAssBody) ->
-      let xVal = eval exprAssBody env te  in
-      let letenv = (x,xVal)::env in 
-      eval exprAssBody letenv te
+      let (xVal, taintness) = eval exprAssBody env t te  in
+      let letenv = (x,xVal, taintness)::env in 
+      eval exprAssBody letenv taintness te
   | Let (x, exprRight, letBody) ->
-      let xVal = eval exprRight env te in
-      let letEnv = (x, xVal) :: env in
-      eval letBody letEnv te
+      let (xVal, taintness) = eval exprRight env t te in
+      let letEnv = (x, xVal, taintness) :: env in
+      eval letBody letEnv taintness te
   | Prim (ope, e1, e2) -> (
-      match (eval e1 env te, eval e2 env te ) with
-      | ((Int i1), (Int i2)) -> (
+      let (v1, t1) = eval e1 env t te in
+      let (v2, t2) = eval e2 env t te in
+      match ((v1,t1), (v2, t2) ) with
+      | ((Int i1, _), (Int i2, _)) -> (
           match ope with
-          | "+" -> (Int (i1 + i2))
-          | "-" -> (Int (i1 - i2))
-          | "*" -> (Int (i1 * i2))
-          | "=" -> (Bool (i1 = i2))
-          | "<" -> (Bool (i1 < i2))
-          | ">" -> (Bool (i1 > i2))
+          | "+" -> (Int (i1 + i2),t1 || t2)
+          | "-" -> (Int (i1 - i2),t1 || t2)
+          | "*" -> (Int (i1 * i2),t1 || t2)
+          | "=" -> (Bool (i1 = i2),t1 || t2)
+          | "<" -> (Bool (i1 < i2),t1 || t2)
+          | ">" -> (Bool (i1 > i2),t1 || t2)
           | _ -> failwith "Unknown operator or wrong types for operation"
         )
-      | ((Bool b1), (Bool b2))-> (
+      | ((Bool b1, _), (Bool b2, _))-> (
           match ope with
-          | "||" -> (Bool (b1 || b2))
-          | "&&" -> (Bool (b1 && b2))
+          | "||" -> (Bool (b1 || b2),t1 || t2)
+          | "&&" -> (Bool (b1 && b2),t1 || t2)
           | _ -> failwith "Unknown operator or wrong types for operation"
         )
       | _ -> failwith "Prim expects two integer arguments"
     ) 
   | If (e1, e2, e3) -> (
-      match eval e1 env te with
-      | (Bool true) -> eval e2 env te
-      | (Bool false) -> eval e3 env te
-        (* | (_, _) -> failwith "If condition must be a boolean" *)
+      let (v1,t1)= eval e1 env t te in
+      match (v1, t1) with
+      | (Bool true, _) -> let (v2,t2) = eval e2 env t te in (v2, t1 || t2)
+      | (Bool false, _) -> let (v3, t3) = eval e3 env t te in (v3, t1 || t3)
       | _ -> failwith "Improper use in If condition"
     )
-  | Fun (x, fBody) -> (Closure (x, fBody, env))
+  | Fun (x, fBody) -> (Closure (x, fBody, env), t)
     (*This part of the call to a function must be checked, here we have the error*)
   | Call (eFun, eArg) -> (
-      let fClosure = eval eFun env te in
+      let (fClosure, tClosure) = eval eFun env t te in
       match fClosure with
       | Closure (x, fBody, fDeclEnv) ->
             (* xVal is evaluated in the current  *)
-          let xVal = eval eArg env te in
-          let fBodyEnv = (x, xVal) :: fDeclEnv in
+          let (xVal, taintness) = eval eArg env tClosure te in
+          let fBodyEnv = (x, xVal, taintness) :: fDeclEnv in
               (* fBody is evaluated in the updated  *)
-          eval fBody fBodyEnv te
+          eval fBody fBodyEnv taintness te
       | _ -> failwith "eval Call: not a function")
-  | Abort msg -> failwith msg
-  | GetInput(e) -> eval e env te
-    (*Da ragionare ampiamente insieme*)
+  | Abort msg -> failwith msg 
   | TrustBlock (tc) ->
+      if t then
+        failwith "Tainted sources cannot access trust block"
+      else (
+        let trustBlockEval = evalTrustContent tc env te eval in
+        (trustBlockEval, false)
+      )
       (*let newList = build [] [] [] in gli passo 3 liste come quelle che abbiamo usato in security*) 
-      evalTrustContent tc env te eval
+      
   | Include (iBody) -> 
     (match iBody with
        | Include(_) -> failwith "you cant include inside an include"
        | TrustBlock(_)-> failwith "you cant create A trustBlock inside an include"
-       | _ -> (ClosureInclude (iBody, env)))
+       | _ -> (ClosureInclude (iBody, env),  true))
   | Execute (extCode) -> (
-      let fClosure = eval extCode env te in
+      let (fClosure, taintV) = eval extCode env t te in
       match fClosure with
       | ClosureInclude (fBody, fDeclEnv) ->
-          eval fBody fDeclEnv te
+          eval fBody fDeclEnv taintV te
       | _ -> failwith "eval Call: not a function")
-  | AccessTrust (ideTrust, ideVar) -> (
-        let trustV = eval ideTrust env te in
-        match trustV with
-        | Block (list,secondEnv) ->
-              eval ideVar secondEnv list
-        | _ -> failwith "the access must be applied to an trustblock")
+  | AccessTrust (ideTrust, ideVar) ->
+    if t then
+      failwith "Tainted sources cannot access trust block"
+    else(
+      let (trustV, taintV)= eval ideTrust env t te in
+      (match (trustV, taintV) with
+      | (Block (list, secondEnv), taintV) ->
+            eval ideVar secondEnv taintV list
+      | _ -> failwith "the access must be applied to an trustblock"))
 
 
 let print_ide_list ide_list = 
@@ -136,10 +141,10 @@ let print_trustedEnv (env : 'v trustedList) =
   print_newline ()
 
       
-let print_eval (ris : value) = (*Just to display on the terminal the evaluation result*)
+let print_eval (ris : value * bool) = (*Just to display on the terminal the evaluation result*)
   match ris with
-  | Int(u) -> Printf.printf "evT = Int %d\n" u
-  | Bool(u) -> Printf.printf "evT = Bool %b\n" u
-  | String(u) -> Printf.printf "evT = Str %s\n" u
-  | Block(_,_) -> Printf.printf "evT = ...\n" 
+  | (Int(u), t) -> Printf.printf "evT = Int %d %b\n" u t 
+  | (Bool(u), t) -> Printf.printf "evT = Bool %b %b \n" u t
+  | (String(u), t) -> Printf.printf "evT = Str %s %b\n" u t
+  | (Block(_,_), _) -> Printf.printf "evT = ...\n" 
   | _ -> Printf.printf "Closure\n";;

@@ -8,10 +8,10 @@ type ide = string
   For simplicity we represent the environment as an association list, i.e., a list of pair (identifier, data).
 *)
 (* type 'v env = (ide * 'v * bool) list *)
-type 'v env = (ide * 'v) list
+type 'v env = (ide * 'v * bool) list
 
 (*To extend an environment*)
-let extend (e : 'v env) (id : ide) (v : 'v) : 'v env = (id, v) :: e
+let extend (e : 'v env) (id : ide) (v : 'v) (t: bool) : 'v env = (id, v, t) :: e
 (*
   Given an environment {env} and an identifier {x} it returns the data {x} is bound to.
   If there is no binding, it raises an exception.
@@ -19,7 +19,7 @@ let extend (e : 'v env) (id : ide) (v : 'v) : 'v env = (id, v) :: e
 let rec lookup env x =
   match env with
   | [] -> failwith (x ^ " not found")
-  | (y, v) :: r -> if x = y then v else lookup r x
+  | (y, v, _) :: r -> if x = y then v else lookup r x
 
 let rec taint_lookup env x=
   match env with

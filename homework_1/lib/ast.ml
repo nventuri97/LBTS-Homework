@@ -15,7 +15,6 @@ type expr =
   | Call of expr * expr
   | Abort of string
   (*This part of the code is added in order to test the DTA*)
-  | GetInput of expr    (*functions that takes input, taint source*)
   | TrustBlock of trustContent
   | Include of expr
   | AccessTrust of expr * expr

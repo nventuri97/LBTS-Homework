@@ -1,17 +1,17 @@
 open Homework_1.Interpreter
 
-let execWithFailure test env list=
+(* let execWithFailure test env list=
   try
     let result = eval test env list in
       (* Convertire il risultato in value per usare print_eval *)
     result
   with Failure msg -> 
-    String ("Error: " ^ msg)
+    String ("Error: " ^ msg) *)
   
 let env = [];;
 let list = ([],[],[]);; 
 
-let test_let_and_prim = execWithFailure (
+(* let test_let_and_prim = execWithFailure (
     Let("x", CstI 3, 
         Prim("*", Var("x"), CstI 8)
        )
@@ -130,8 +130,39 @@ let test_TU = eval(
                     Handle("y", EndTrustBlock)
                   )
         )),
-        Let("extCode",
-            Include(Let("a", 
+        Let("plainCode",
+            Assign("g", 
+              CstI 10),
+            Let("extCode",
+              Include(Let("a", 
+                          CstI 5,
+                          Let("b",
+                              CstI 8,
+                              Prim("*", Var("g"), Var("a"))
+                              )
+                          )
+                        ),
+                        Execute(Var("extCode"))
+                      )
+              
+            )
+        )
+      ) env false list;;
+print_eval(test_TU)
+
+(* 
+  let test_TU = eval(
+  Let("mytrustB", 
+      TrustBlock(
+        LetSecret("x",
+                  CstI 1,
+                  LetPublic(
+                    "y",
+                    CstI 3,
+                    Handle("y", EndTrustBlock)
+                  )
+        )),
+        Let("a", 
                         CstI 5,
                         Let("b",
                             CstI 8,
@@ -141,7 +172,5 @@ let test_TU = eval(
                       )
                     ), 
             Execute(Var("extCode")) 
-          )
-      )
-  ) env list;;
-  print_eval(test_TU)
+          ) env false list;;
+  print_eval(test_TU) *)
