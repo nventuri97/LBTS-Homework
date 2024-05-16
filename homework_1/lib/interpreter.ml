@@ -39,19 +39,19 @@ let rec eval (e : expr) (env : value env) (t: bool) (te : value trustedList): (v
   | CstB b -> (Bool b, t)
   | CstString s -> (String s, t)
   | Var (x) ->
-    (* if ( isIn x (getTrust te) && 
+    if ( isIn x (getTrust te) && 
           (isIn x (getSecret te) || not (isIn x (getHandle te)))
         ) then 
-      failwith ( x ^ " is trying to access to a var without permission")
-    else  *)
+      failwith ( "Cannot access var "^ x ^" without permission")
+    else 
       (lookup env x, taint_lookup env x)
   | Assign(x, exprAssBody) ->
       let (xVal, taintness) = eval exprAssBody env t te  in
-      let letenv = (x,xVal, taintness)::env in 
+      let letenv = extend env x xVal taintness in 
       eval exprAssBody letenv taintness te
   | Let (x, exprRight, letBody) ->
       let (xVal, taintness) = eval exprRight env t te in
-      let letEnv = (x, xVal, taintness) :: env in
+      let letEnv = extend env x xVal taintness in
       eval letBody letEnv taintness te
   | Prim (ope, e1, e2) -> (
       let (v1, t1) = eval e1 env t te in

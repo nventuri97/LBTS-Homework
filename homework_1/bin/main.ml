@@ -130,15 +130,14 @@ let test_TU = eval(
                     Handle("y", EndTrustBlock)
                   )
         )),
-        Let("plainCode",
-            Assign("g", 
-              CstI 10),
+        Let("g",
+            Assign("g", CstI 5),
             Let("extCode",
               Include(Let("a", 
                           CstI 5,
                           Let("b",
                               CstI 8,
-                              Prim("*", Var("g"), Var("a"))
+                              Prim("*", AccessTrust( Var("mytrustB"), Var("y")), Var("a"))
                               )
                           )
                         ),
@@ -150,27 +149,26 @@ let test_TU = eval(
       ) env false list;;
 print_eval(test_TU)
 
-(* 
-  let test_TU = eval(
-  Let("mytrustB", 
-      TrustBlock(
-        LetSecret("x",
-                  CstI 1,
-                  LetPublic(
-                    "y",
-                    CstI 3,
-                    Handle("y", EndTrustBlock)
+
+  (* let test_TU = eval(
+    Let("mytrustB", 
+        TrustBlock(
+          LetSecret("x",
+                    CstI 1,
+                    LetPublic(
+                      "y",
+                      CstI 3,
+                      Handle("y", EndTrustBlock)
+                    )
+          )),
+          Let("a", 
+              CstI 5,
+              Let("b",
+                  CstI 8,
+                  Prim("*", Var("b"), AccessTrust(Var("mytrustB"), Var("y"))
                   )
-        )),
-        Let("a", 
-                        CstI 5,
-                        Let("b",
-                            CstI 8,
-                            Prim("*", Var("b"), AccessTrust(Var("mytrustB"), Var("y"))
-                            )
-                        )
-                      )
-                    ), 
-            Execute(Var("extCode")) 
-          ) env false list;;
+                )
+              )
+        )
+      ) env false list;;
   print_eval(test_TU) *)
