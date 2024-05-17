@@ -16,6 +16,7 @@ type expr =
   | Abort of string
   (*This part of the code is added in order to test the DTA*)
   | TrustBlock of trustContent
+  | TrustedVar of ide
   | Include of expr
   | AccessTrust of expr * expr
   | Execute of expr

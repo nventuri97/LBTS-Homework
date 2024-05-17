@@ -102,6 +102,10 @@ let rec eval (e : expr) (env : value env) (t: bool) (te : value trustedList): (v
         let trustBlockEval = evalTrustContent tc env te eval in
           (trustBlockEval, false)
       )
+  | TrustedVar x ->
+      if isIn x (getTrust te) 
+        then (lookup env x, taint_lookup env x) 
+        else failwith "This ide doesn't exist or it belongs to another env"
   | Include (iBody) -> 
     (match iBody with
        | Include(_) -> failwith "you cant include inside an include"
