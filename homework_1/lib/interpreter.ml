@@ -115,9 +115,13 @@ let rec eval (e : expr) (env : value env) (t: bool) (te : value trustedList): (v
       let (fClosure, taintV) = eval extCode env t te in
         match fClosure with
         | ClosureInclude (fBody, fDeclEnv) ->
-            eval fBody fDeclEnv taintV te
+            let (_,v)= eval fBody fDeclEnv taintV te in
+                if v then eval (CstI 2) fDeclEnv false te (*allora, se siamo arrivati qua senza errori vuol dire che v è true
+                   ma non c'è stato nessun tentativo di accesso al blocco trust, quindi questo true deve ritornare
+                false... ora il come si fa in questo momento non mi viene affatto, perchè dovremmo capire come modificare
+                definitivamente la t della eval in false da qua in avanti*) else failwith "impossibile"
         | _ -> failwith "eval Call: not a function")
-  | AccessTrust (ideTrust, ideVar) ->
+  | AccessTrust (ideTrust, ideVar) -> 
     if t then
       failwith "Tainted sources cannot access trust block"
     else(

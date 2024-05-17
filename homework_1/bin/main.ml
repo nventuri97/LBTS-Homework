@@ -141,7 +141,7 @@ Let("mytrustB",
     )
   ) env false list;;
 print_eval(test2) 
-*)
+
 
 (* Testing Assert on Trusted Block *)
 let test2 = eval(
@@ -212,3 +212,62 @@ let test2 = eval(
     )
  ) env false list;;
 print_eval(test2)
+*)
+let test_TU = eval(
+  Let("mytrustB", 
+      TrustBlock(
+        LetSecret("x",
+                  CstI 1,
+                  LetPublic(
+                    "y",
+                    CstI 3,
+                    Handle("y", EndTrustBlock)
+                  )
+        )),
+        Let("plainCode",
+          Let("extCode",
+              Include(Let("a", 
+                          CstI 5,
+                          Let("b",
+                              CstI 8,
+                              Prim("*", Var("b"), Var("a"))
+                              )
+                          )
+                        ),
+              Execute(Var("extCode"))),
+          Assign("basd", AccessTrust(Var("mytrustB"), Var("y"))) (*questo test stampa 10 con valore della taintness true, quindi è già la execute
+             che fa il controllo sugli accessi, non la include. Quindi dobbiamo trovare un modo nella execute che se non alza errori
+             alla fine deve ritornare false e non true*)
+            )
+        )
+      )env false list;;
+  print_eval(test_TU)
+  let test_TU = eval(
+    Let("mytrustB", 
+        TrustBlock(
+          LetSecret("x",
+                    CstI 1,
+                    LetPublic(
+                      "y",
+                      CstI 3,
+                      Handle("y", EndTrustBlock)
+                    )
+          )),
+          Let("plainCode",
+            Let("extCode",
+                Include(Let("a", 
+                            CstI 5,
+                            Let("b",
+                                CstI 8,
+                                Prim("*", AccessTrust(Var("mytrustB"), Var("y")), Var("a"))
+                                )
+                            )
+                          ),
+                Execute(Var("extCode"))),
+            Assign("basd", AccessTrust(Var("mytrustB"), Var("y"))) (*questo test stampa 10 con valore della taintness true, quindi è già la execute
+               che fa il controllo sugli accessi, non la include. Quindi dobbiamo trovare un modo nella execute che se non alza errori
+               alla fine deve ritornare false e non true*)
+              )
+          )
+        )env false list;;
+    print_eval(test_TU)
