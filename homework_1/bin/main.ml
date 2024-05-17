@@ -89,3 +89,32 @@ let test_Include = execWithFailure (
        )
   ) env list;;
 print_eval(test_Include)
+
+let test_TU = eval(
+    Let("mytrustB", 
+        TrustBlock(LetSecret("x",
+                             CstI 1,
+                             LetPublic("y",
+                                       CstI 3,
+                                       Handle("y", EndTrustBlock)
+                                      )
+                            )
+                  ),
+        Let("plainCode",
+            Let("extCode",
+                Include(Let("a", 
+                            CstI 5,
+                            Let("b",
+                                AccessTrust(Var("mytrustB"), Var("y")),
+                                Prim("*", Var("b"), Var("a"))
+                               )
+                           )
+                       ),
+                Assign("plainCode",
+                       Execute(Var("extCode"))
+                      )
+               ),
+            AccessTrust(Var("mytrustB"), Var("y"))
+           )
+       )
+  ) env false list;;
