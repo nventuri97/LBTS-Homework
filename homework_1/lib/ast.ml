@@ -19,6 +19,7 @@ type expr =
   | Include of expr
   | AccessTrust of expr * expr
   | Execute of expr
+  | Assert of ide
 and trustContent =
   | LetSecret of ide * expr * trustContent
   | LetPublic of ide * expr * trustContent

@@ -100,30 +100,34 @@ let rec eval (e : expr) (env : value env) (t: bool) (te : value trustedList): (v
         failwith "Tainted sources cannot access trust block"
       else (
         let trustBlockEval = evalTrustContent tc env te eval in
-        (trustBlockEval, false)
+          (trustBlockEval, false)
       )
-      (*let newList = build [] [] [] in gli passo 3 liste come quelle che abbiamo usato in security*) 
-      
   | Include (iBody) -> 
     (match iBody with
        | Include(_) -> failwith "you cant include inside an include"
        | TrustBlock(_)-> failwith "you cant create A trustBlock inside an include"
-       | _ -> (ClosureInclude (iBody, env),  true))
+       | _ -> (ClosureInclude (iBody, env), true))
   | Execute (extCode) -> (
       let (fClosure, taintV) = eval extCode env t te in
-      match fClosure with
-      | ClosureInclude (fBody, fDeclEnv) ->
-          eval fBody fDeclEnv taintV te
-      | _ -> failwith "eval Call: not a function")
+        match fClosure with
+        | ClosureInclude (fBody, fDeclEnv) ->
+            eval fBody fDeclEnv taintV te
+        | _ -> failwith "eval Call: not a function")
   | AccessTrust (ideTrust, ideVar) ->
     if t then
       failwith "Tainted sources cannot access trust block"
     else(
-      let (trustV, taintV)= eval ideTrust env t te in
-      (match (trustV, taintV) with
-      | (Block (list, secondEnv), taintV) ->
-            eval ideVar secondEnv taintV list
-      | _ -> failwith "the access must be applied to an trustblock"))
+      let (trustV, taintV) = eval ideTrust env t te in
+        (match (trustV, taintV) with
+        | (Block (list, secondEnv), taintV) ->
+              eval ideVar secondEnv taintV list
+        | _ -> failwith "the access must be applied to an trustblock"))
+  | Assert (ide) -> (
+    let taintness = taint_lookup env ide in
+      if taintness then
+        failwith ("Assertion Failed - Var \"" ^ ide ^ "\" is tainted")
+      else
+        (lookup env ide , taintness))
 
 
 let print_ide_list ide_list = 
@@ -143,8 +147,8 @@ let print_trustedEnv (env : 'v trustedList) =
       
 let print_eval (ris : value * bool) = (*Just to display on the terminal the evaluation result*)
   match ris with
-  | (Int(u), t) -> Printf.printf "evT = Int %d %b\n" u t 
-  | (Bool(u), t) -> Printf.printf "evT = Bool %b %b \n" u t
-  | (String(u), t) -> Printf.printf "evT = Str %s %b\n" u t
-  | (Block(_,_), _) -> Printf.printf "evT = ...\n" 
+  | (Int(u), t) -> Printf.printf "Result: Int %d, Taintness: %b\n" u t 
+  | (Bool(u), t) -> Printf.printf "Result: Bool %b, Taintness: %b \n" u t
+  | (String(u), t) -> Printf.printf "Result: String %s, Taintness: %b\n" u t
+  | (Block(_,_), _) -> Printf.printf "Result: Block created succesfully\n" 
   | _ -> Printf.printf "Closure\n";;
