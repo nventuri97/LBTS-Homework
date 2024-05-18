@@ -14,20 +14,22 @@ type expr =
   | Call of expr * expr
   | Abort of string
   (*This part of the code is added in order to test the DTA*)
-  | GetInput of expr    (*functions that takes input, taint source*)
   | TrustBlock of trustContent
+  | TrustedVar of ide
   | Include of expr
+  | AccessTrust of expr * expr
   | Execute of expr
+  | Assert of ide
 and trustContent =
   | LetSecret of ide * expr * trustContent
   | LetPublic of ide * expr * trustContent
   | Handle of ide * trustContent
-  | EndTrustBlock
+  | EndTrustBlock 
 
 (*
-  A runtime value is an integer or a function closure
-  Boolean are encoded as integers.
-*)
+A runtime value is an integer or a function closure
+    Boolean are encoded as integers.
+                         *)
 type value = 
   | Int of int
   | Bool of bool
@@ -36,4 +38,4 @@ type value =
   (* | Closure of ide * expr * value env * bool *)
   | Closure of ide * expr * value env
   | ClosureInclude of expr * value env
-  | Block of string
+  | Block of value trustedList * value env
