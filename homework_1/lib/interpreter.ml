@@ -128,10 +128,10 @@ let rec eval (e : expr) (env : value env) (t: bool) (te : value trustedList): (v
          | _ -> failwith "the access must be applied to an trustblock"))
   | Assert (ide) -> (
       let taintness = taint_lookup env ide in
-      if taintness then
-        failwith ("Assertion Failed - Var \"" ^ ide ^ "\" is tainted")
-      else
-        (lookup env ide , taintness))
+        if taintness then
+          failwith ("Assertion Failed - Var \"" ^ ide ^ "\" is tainted")
+        else
+          (lookup env ide , taintness))
 
 
 let print_ide_list ide_list = 

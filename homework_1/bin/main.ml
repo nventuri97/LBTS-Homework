@@ -304,3 +304,34 @@ let test_TU_12 = eval(
      )
 ) env false list;;
 print_eval(test_TU_12);;
+
+(* Testing Assert in normal code *)
+print_string "Test_13\n";;
+let test_TU_13 = eval(
+  Let("code",
+    Let("x", 
+      CstI 2,
+      Prim("+", Var "x", CstI 2)
+    ),
+    Assert("code")
+  )
+) env false list;;
+print_eval(test_TU_13);;
+
+(* Testing Assert on Untrusted Block *)
+print_string "Test_14\n";;
+execWithFailure(
+  Let("plugin",
+    Include(
+      Let("x", CstB false,
+          Let("y", CstB true,
+          Prim("&&", Var("x"), Var("y"))
+        )
+      )
+    ),
+    Let("exe",
+      Execute(Var("plugin")),
+      Assert("exe")
+    )
+  )
+) env false list;;
