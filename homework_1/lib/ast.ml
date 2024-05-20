@@ -15,12 +15,11 @@ type expr =
   | Call of expr * expr
   | Abort of string
   (*This part of the code is added in order to test the DTA*)
+  | GetInput of expr    (*functions that takes input, taint source*)
   | TrustBlock of trustContent
-  | TrustedVar of ide
   | Include of expr
   | AccessTrust of expr * expr
   | Execute of expr
-  | Assert of ide
 and trustContent =
   | LetSecret of ide * expr * trustContent
   | LetPublic of ide * expr * trustContent

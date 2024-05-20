@@ -1,17 +1,18 @@
 open Homework_1.Interpreter
-
-(* let execWithFailure test env list=
+let env = [];;
+let list = ([],[],[]);; 
+(*
+let execWithFailure test env list=
   try
     let result = eval test env list in
       (* Convertire il risultato in value per usare print_eval *)
     result
   with Failure msg -> 
-    String ("Error: " ^ msg) *)
-  
-let env = [];;
-let list = ([],[],[]);; 
+    String ("Error: " ^ msg)
 
-(* let test_let_and_prim = execWithFailure (
+
+
+let test_let_and_prim = execWithFailure (
     Let("x", CstI 3, 
         Prim("*", Var("x"), CstI 8)
        )
@@ -118,101 +119,7 @@ let test_tBlock1 = eval (
         )
       ) env list;; (*questo non fa fare l'accesso ne se chiami x ne se chiami funy*)
 print_eval(test_tBlock1)*)
-(*
-let test2 = eval(
-Let("mytrustB", 
-    TrustBlock(
-      LetSecret("x",
-                CstI 1,
-                LetPublic(
-                  "y",
-                  CstI 3,
-                  Handle("y", EndTrustBlock)
-                )
-      )),
-      Let("a", 
-          CstI 5,
-          Let("b",
-              CstI 8,
-              Prim("*", Var("b"), AccessTrust(Var("mytrustB"), Var("y"))
-              )
-            )
-          )
-    )
-  ) env false list;;
-print_eval(test2) 
 
-
-(* Testing Assert on Trusted Block *)
-let test2 = eval(
-  Let("mytrustB", 
-    TrustBlock(
-      LetSecret("x", CstI 1,
-          LetPublic("y", CstI 3,
-              Handle("y", EndTrustBlock)
-          )
-      )
-    ),
-    Let("a", AccessTrust(Var("mytrustB"), Assert("y")), Assert("a"))
-  )
- ) env false list;;
-print_eval(test2)
-
-(* Testing Include & Execute *)
-let test1 = eval(
-  Let("extCode",
-    Include(
-      Let("a", CstI 5,
-        Let("b", CstI 8,
-          Prim("*", Var("a"), Var("b"))
-        )
-      )
-    ),
-    Execute(Var("extCode"))
-  )
- ) env false list;;
-print_eval(test1)
-
-(* Testing Assert on Untrusted Block *)
-let test2 = eval(
-  Let("plugin", 
-    Include(
-      Let("x", CstB false,
-          Let("y", CstB true,
-          Prim("&&", Var("x"), Var("y"))
-        )
-      )
-    ),
-    Execute(Assert("plugin"))
-  )
- ) env false list;;
-print_eval(test2)
-
-(* Testing Include & Execute on Trusted Handled values *)
-let test2 = eval(
-  Let("mytrustB", 
-      TrustBlock(
-        LetSecret("x", CstI 1,
-            LetPublic("y", CstI 3,
-                Handle("y", EndTrustBlock)
-            )
-        )
-      ),
-      Let("extCode",
-        Include(
-          Let("a", CstI 5,
-            Let("b", CstI 8,
-              Prim("*", AccessTrust(Var("mytrustB"), Var("y")), Var("b"))
-            )
-          )
-        ),
-        (* Notice that the fail happens here and not inside the Include block *)
-        Execute(Var("extCode")) 
-      )
-    )
- ) env false list;;
-print_eval(test2)
-*)
 let test_TU = eval(
   Let("mytrustB", 
       TrustBlock(
@@ -224,50 +131,18 @@ let test_TU = eval(
                     Handle("y", EndTrustBlock)
                   )
         )),
-        Let("plainCode",
-          Let("extCode",
-              Include(Let("a", 
-                          CstI 5,
-                          Let("b",
-                              CstI 8,
-                              Prim("*", Var("b"), Var("a"))
-                              )
-                          )
-                        ),
-              Execute(Var("extCode"))),
-          Assign("basd", AccessTrust(Var("mytrustB"), Var("y"))) (*questo test stampa 10 con valore della taintness true, quindi è già la execute
-             che fa il controllo sugli accessi, non la include. Quindi dobbiamo trovare un modo nella execute che se non alza errori
-             alla fine deve ritornare false e non true*)
-            )
-        )
-      )env false list;;
-  print_eval(test_TU)
-  let test_TU = eval(
-    Let("mytrustB", 
-        TrustBlock(
-          LetSecret("x",
-                    CstI 1,
-                    LetPublic(
-                      "y",
-                      CstI 3,
-                      Handle("y", EndTrustBlock)
-                    )
-          )),
-          Let("plainCode",
-            Let("extCode",
-                Include(Let("a", 
-                            CstI 5,
-                            Let("b",
-                                CstI 8,
-                                Prim("*", AccessTrust(Var("mytrustB"), Var("y")), Var("a"))
-                                )
+        Let("extCode",
+            Include(Let("a", 
+                        CstI 5,
+                        Let("b",
+                            CstI 8,
+                            Prim("*", Var("b"), AccessTrust(Var("mytrustB"), Var("y"))
                             )
-                          ),
-                Execute(Var("extCode"))),
-            Assign("basd", AccessTrust(Var("mytrustB"), Var("y"))) (*questo test stampa 10 con valore della taintness true, quindi è già la execute
-               che fa il controllo sugli accessi, non la include. Quindi dobbiamo trovare un modo nella execute che se non alza errori
-               alla fine deve ritornare false e non true*)
-              )
+                        )
+                      )
+                    ), 
+            Execute(Var("extCode")) 
           )
-        )env false list;;
-    print_eval(test_TU)
+      )
+  ) env list;;
+  print_eval(test_TU)
