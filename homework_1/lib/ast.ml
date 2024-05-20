@@ -10,21 +10,21 @@ type expr =
   | Let of ide * expr * expr (*let x= x in...*)
   | Prim of ide * expr * expr
   | If of expr * expr * expr
-  (* Lambda: parameters, body and permission domain *)
   | Fun of ide * expr 
   | Call of expr * expr
   | Abort of string
   (*This part of the code is added in order to test the DTA*)
-  | GetInput of expr    (*functions that takes input, taint source*)
   | TrustBlock of trustContent
+  | TrustedVar of ide 
   | Include of expr
   | AccessTrust of expr * expr
   | Execute of expr
+  | Assert of ide
 and trustContent =
   | LetSecret of ide * expr * trustContent
   | LetPublic of ide * expr * trustContent
   | Handle of ide * trustContent
-  | EndTrustBlock 
+  | EndTrustBlock
 
 (*
   A runtime value is an integer or a function closure

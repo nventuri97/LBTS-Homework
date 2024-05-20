@@ -1,148 +1,306 @@
 open Homework_1.Interpreter
+
 let env = [];;
-let list = ([],[],[]);; 
-(*
-let execWithFailure test env list=
-  try
-    let result = eval test env list in
-      (* Convertire il risultato in value per usare print_eval *)
-    result
-  with Failure msg -> 
-    String ("Error: " ^ msg)
+let list = ([],[],[]);;
 
+let execWithFailure test env t list = 
+    let (value, success) =
+      try 
+        eval test env t list 
+      with 
+        Failure msg -> 
+          Printf.printf "Test fallito con errore: %s\n" msg;
+          (Bool false, false)
+    in
+    assert (value = Bool false && success = false);;
 
-
-let test_let_and_prim = execWithFailure (
-    Let("x", CstI 3, 
-        Prim("*", Var("x"), CstI 8)
-       )
-  ) env list;;
-print_eval(test_let_and_prim) 
-  
-let test_assign = execWithFailure (
-    Assign("x", CstI 5)
-  ) env list;;
-print_eval(test_assign)
-
-let test_if = execWithFailure (
-    Let("x", CstI 3, 
-        Let("y", CstI 5,
-            If(Prim(">", Var("x"), Var("y")),
-               CstB true,
-               CstB false
-              )
-           )
-       )
-  ) env list;;
-
-print_eval(test_if)
-
-let test_fun_call = execWithFailure (
-    Let(
-      "sumXY", 
-      Fun("x", 
-          Fun("y",
-              Let("x",
-                  CstI 0,
-                  Let("y",
-                      CstI 1,
-                      Prim("+", Var("x"), Var("y"))
-                     )
-                 ))), 
-      Call(
-        Call(Var("sumXY"),
-             CstI 2), 
-        CstI 0)
-    )
-  ) env list;;
-print_eval(test_fun_call) 
-
-let test_tBlock = execWithFailure (
-    Assign("mytrustB", TrustBlock(
-        LetSecret("x", CstI 1, 
-                  LetPublic("funy", 
-                            Fun("a", 
-                                Fun("b",
-                                    Prim("+", Var("a"), Var("b"))
-                                   )
-                               ),
-                            Handle("funy", EndTrustBlock)))
-      ) 
-      )) env list;;
-print_eval(test_tBlock)
-
-let test_Include = execWithFailure (
-    Let("y", 
-        CstI 54,
-        Let("x", 
-            Include(Let("a",
-                        CstI 0,
-                        Let("b",
-                            CstI 10,
-                            Assign("a", CstI 100)
-                           )
-                       )
-                   ),
-        
-            Call(Var("y"), Var("x"))
-           )
-       )
-  ) env list;;
-print_eval(test_Include)
-
-
-let mytrust = trust{
-  let secret x= 0;
-  let public sum =x;
-  let public h= 10;
-  handle sum; 
-}
-let myInclude = include{
-  let c=1;
-  let d=3;
-  execute(sum, c, d);
-}  
-
-
-let test_tBlock1 = eval (
-    Let("mytrustB", TrustBlock(
-        LetSecret("x", 
-                  CstI 1,
-                  LetPublic("funy", 
-                            CstI 8,
-                            Handle("funy", EndTrustBlock) )
+  print_string "Test_0\n";;
+  let test_TU = eval(
+    Let("mytrustB", 
+        TrustBlock(LetSecret("x",
+                             CstI 1,
+                             LetPublic("y",
+                                       CstI 3,
+                                       Handle("y", EndTrustBlock)
+                                      )
                             )
-                  ), 
-        Let("kal", 
-          CstI 4 , 
-          Prim("*", Var("kal"), AccessTrust(Var("mytrustB"), Var("x"))))
-        )
-      ) env list;; (*questo non fa fare l'accesso ne se chiami x ne se chiami funy*)
-print_eval(test_tBlock1)*)
+                  ),
+        Let("plainCode",
+            Let("extCode",
+                Include(Let("a", 
+                            CstI 5,
+                            Let("b",
+                                CstI 5,
+                                Prim("*", Var("b"), Var("a"))
+                               )
+                           )
+                       ),
+                Assign("plainCode",
+                       Execute(Var("extCode"))
+                      )
+               ),
+            AccessTrust(Var("mytrustB"), Var("y"))
+           )
+       )
+  ) env false list;;
+  print_eval(test_TU);;
 
-let test_TU = eval(
-  Let("mytrustB", 
-      TrustBlock(
-        LetSecret("x",
-                  CstI 1,
-                  LetPublic(
-                    "y",
-                    CstI 3,
-                    Handle("y", EndTrustBlock)
-                  )
-        )),
+(*questo test stampa (6, false) e mi torna perché l'ultimo valore è untainted*) 
+print_string "Test_1\n";;
+let test_TU_1 = eval(
+    Let("mytrustB", 
+        TrustBlock(LetSecret("x",
+                             CstI 1,
+                             LetPublic("y",
+                                       CstI 3,
+                                       Handle("y", EndTrustBlock)
+                                      )
+                            )
+                  ),
+        Let("plainCode",
+            Let("extCode",
+                Include(Let("a", 
+                            CstI 5,
+                            Let("b",
+                                CstI 2,
+                                Prim("*", Var("b"), Var("a"))
+                               )
+                           )
+                       ),
+                Assign("plainCode",
+                       Execute(Var("extCode"))
+                      )
+               ),
+            CstI 6
+           )
+       )
+  ) env false list;;
+ 
+  print_eval(test_TU_1);;
+(*questo test stampa (3, false) e mi torna perché lo stesso y non è stata toccata
+da nessun valore tainted*)
+print_string "Test_2\n";;
+let test_TU_2 = eval(
+    Let("mytrustB", 
+        TrustBlock(LetSecret("x",
+                             CstI 1,
+                             LetPublic("y",
+                                       CstI 3,
+                                       Handle("y", EndTrustBlock)
+                                      )
+                            )
+                  ),
+        Let("plainCode",
+            Let("extCode",
+                Include(Let("a", 
+                            CstI 5,
+                            Let("b",
+                                CstI 2,
+                                Prim("*", Var("b"), Var("a"))
+                               )
+                           )
+                       ),
+                Assign("plainCode",
+                       Execute(Var("extCode"))
+                      )
+               ),
+            AccessTrust(Var("mytrustB"), Var("y"))
+           )
+       )
+  ) env false list;;
+  print_eval(test_TU_2);;
+(*questo test stampa (10, true) e mi torna perché l'ultimo valore valutato è 
+5*2 nella execute, quindi tainted*)
+print_string "Test_3\n";; 
+let test_TU_3 = eval(
+    Let("mytrustB", 
+        TrustBlock(LetSecret("x",
+                             CstI 1,
+                             LetPublic("y",
+                                       CstI 3,
+                                       Handle("y", EndTrustBlock)
+                                      )
+                            )
+                  ),
+        Let("plainCode", 
+            AccessTrust(Var("mytrustB"), Var("y")),
+            Let("extCode",
+                Include(Let("a", 
+                            CstI 5,
+                            Let("b",
+                                CstI 2,
+                                Prim("*", Var("b"), Var("a"))
+                               )
+                           )
+                       ),
+                Execute(Var("extCode")) 
+               )
+           )
+       )
+  ) env false list;;
+  print_eval(test_TU_3);;
+(*questo test fallisce al momento della Execute perché cerco di chiamare y 
+all'interno della Include *)
+print_string "Test_4\n";;
+execWithFailure (
+    Let("mytrustB", 
+        TrustBlock(LetSecret("x",
+                             CstI 1,
+                             LetPublic("y",
+                                       CstI 3,
+                                       Handle("y", EndTrustBlock)
+                                      )
+                            )
+                  ),
+        Let("plainCode", 
+            AccessTrust(Var("mytrustB"), Var("y")),
+            Let("extCode",
+                Include(Let("a", 
+                            CstI 5,
+                            Let("b",
+                                AccessTrust(Var("mytrustB"), Var("y")),
+                                Prim("*", Var("b"), Var("a"))
+                               )
+                           )
+                       ),
+                Execute(Var("extCode")) 
+               )
+           )
+       )) env false list;;
+
+  print_string "Test_5\n";;
+  let test_TU_5 = eval(
+    Let("mytrustB", 
+        TrustBlock(LetSecret("x",
+                             CstI 1,
+                             LetPublic( "f",
+                              Fun ("z", Prim ("*", Var "z", CstI 5)),
+                             Handle ("f", EndTrustBlock) )
+                            )
+                  ),
+        Call(AccessTrust(Var("mytrustB"), Var("f")), CstI 2)
+       )
+  ) env false list;;
+  print_eval(test_TU_5);;
+(*questa deve fallire*)
+print_string "Test_6\n";;
+execWithFailure(
+    Let("mytrustB", 
+        TrustBlock(LetSecret("x",
+                             CstI 1,
+                             LetPublic( "f",
+                              Fun ("z", Prim ("*", Var "z", CstI 5)),
+                             Handle ("f", EndTrustBlock) )
+                            )
+                  ),
         Let("extCode",
             Include(Let("a", 
-                        CstI 5,
-                        Let("b",
-                            CstI 8,
-                            Prim("*", Var("b"), AccessTrust(Var("mytrustB"), Var("y"))
+                      CstI 5,
+                      Call(AccessTrust(Var("mytrustB"), Var("f")), Var("a"))
+                             )
+                         ),
+                  Execute(Var("extCode")) 
+                 )
+       )
+  ) env false list;;
+
+  (*TrustedVar used inside a trust block*)
+  print_string "Test_7\n";;
+  let test_TU_7 = eval(
+    Let("mytrustB", 
+        TrustBlock(LetPublic("x",
+                             CstI 11,
+                             LetPublic( "f",
+                                TrustedVar("x"),
+                             Handle ("f", EndTrustBlock) )
                             )
+                  ),
+        AccessTrust(Var("mytrustB"), Var("f"))
+       )
+  ) env false list;;
+  print_eval(test_TU_7);;
+
+(*Cant declare handle a secret*)
+print_string "Test_8\n";;
+execWithFailure(
+    Let("mytrustB", 
+        TrustBlock(LetSecret("x",
+                             CstI 11,
+                             LetPublic( "f",
+                             TrustedVar("x"),
+                             Handle ("x", EndTrustBlock) )
+                            )
+                  ),
+        AccessTrust(Var("mytrustB"), Var("x"))
+       )
+) env false list;;
+
+(*TrusteVar outside a trustBlock*)
+print_string "Test_9\n";;
+execWithFailure(
+    Let("mytrustB", 
+        TrustBlock(LetPublic("x",
+                             CstI 11,
+                             LetPublic( "f",
+                             TrustedVar("x"),
+                             Handle ("f", EndTrustBlock) )
+                            )
+                  ),
+        Assign("PlainT", TrustedVar("x"))
+       )
+) env false list;;
+
+(*trustBlock inside an include*)
+print_string "Test_10\n";;
+execWithFailure(
+    Let("myUtrustB", 
+        Include(TrustBlock(LetSecret("x", CstI 10, EndTrustBlock))
+                  ),
+        Execute(Var"myUtrustB")
+        )
+) env false list;;
+
+    (*include inside an include*)
+print_string "Test_11\n";;
+execWithFailure(
+    Let("myUtrustB", 
+        Include(Include(Let("a", 
+                            CstI 5,
+                            Prim("*", Var "a", CstI 8))
                         )
-                      )
-                    ), 
-            Execute(Var("extCode")) 
-          )
-      )
-  ) env list;;
-  print_eval(test_TU)
+                      ),
+        Execute(Var"myUtrustB")
+        )
+) env false list;;
+
+(*This should work but we are multipling a tainted value with an untainted one, still no trust block involved*)
+print_string "Test_12\n";;
+let test_TU_12 = eval(
+  Let("mytrustB", 
+      TrustBlock(LetSecret("x",
+                           CstI 1,
+                           LetPublic("y",
+                                     CstI 3,
+                                     Handle("y", EndTrustBlock)
+                                    )
+                          )
+                ),
+      Let("plainCode",
+          Let("extCode",
+              Include(Let("a", 
+                          CstI 2,
+                          Let("b",
+                              CstI 5,
+                              Prim("*", Var("b"), Var("a"))
+                             )
+                         )
+                     ),
+              Assign("plainCode",
+                     Execute(Var("extCode"))
+                    )
+             ),
+          Let("g", CstI 10, Prim("*", Var "g", Var "plainCode"))
+         )
+     )
+) env false list;;
+print_eval(test_TU_12);;
