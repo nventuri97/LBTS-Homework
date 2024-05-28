@@ -1,0 +1,32 @@
+# dune exec homework_1
+# OCAMLPARAM: unset
+# Shared cache: disabled
+# Shared cache location: /home/nicola/.cache/dune/db
+# Workspace root: "/home/nicola/Scrivania/Magistrale/Language-based technology
+# for security/LBTS-Homework/homework_1"
+# Auto-detected concurrency: 8
+# Dune context:
+#  { name = "default"
+#  ; kind = "default"
+#  ; profile = Dev
+#  ; merlin = true
+#  ; fdo_target_exe = None
+#  ; build_dir = In_build_dir "default"
+#  ; instrument_with = []
+#  }
+$ /home/nicola/.opam/default/bin/ocamlc.opt -config > /tmp/dune_61c6cd_output
+$ (cd _build/default && /home/nicola/.opam/default/bin/ocamlc.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -49 -nopervasives -nostdlib -g -bin-annot -I src/lib/.homework_1.objs/byte -no-alias-deps -opaque -o src/lib/.homework_1.objs/byte/homework_1.cmo -c -impl src/lib/homework_1.ml-gen)
+$ (cd _build/default && /home/nicola/.opam/default/bin/ocamldep.opt -modules -impl src/lib/ast.ml) > _build/default/src/lib/.homework_1.objs/homework_1__Ast.impl.d
+$ (cd _build/default && /home/nicola/.opam/default/bin/ocamldep.opt -modules -impl src/lib/env.ml) > _build/default/src/lib/.homework_1.objs/homework_1__Env.impl.d
+$ (cd _build/default && /home/nicola/.opam/default/bin/ocamldep.opt -modules -impl src/lib/interpreter.ml) > _build/default/src/lib/.homework_1.objs/homework_1__Interpreter.impl.d
+$ (cd _build/default && /home/nicola/.opam/default/bin/ocamlopt.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -49 -nopervasives -nostdlib -g -I src/lib/.homework_1.objs/byte -I src/lib/.homework_1.objs/native -intf-suffix .ml-gen -no-alias-deps -opaque -o src/lib/.homework_1.objs/native/homework_1.cmx -c -impl src/lib/homework_1.ml-gen)
+$ (cd _build/default && /home/nicola/.opam/default/bin/ocamlc.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -bin-annot -I src/lib/.homework_1.objs/byte -no-alias-deps -opaque -open Homework_1 -o src/lib/.homework_1.objs/byte/homework_1__Env.cmo -c -impl src/lib/env.ml)
+$ (cd _build/default && /home/nicola/.opam/default/bin/ocamlc.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -bin-annot -I src/lib/.homework_1.objs/byte -no-alias-deps -opaque -open Homework_1 -o src/lib/.homework_1.objs/byte/homework_1__Ast.cmo -c -impl src/lib/ast.ml)
+$ (cd _build/default && /home/nicola/.opam/default/bin/ocamlopt.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -I src/lib/.homework_1.objs/byte -I src/lib/.homework_1.objs/native -intf-suffix .ml -no-alias-deps -opaque -open Homework_1 -o src/lib/.homework_1.objs/native/homework_1__Env.cmx -c -impl src/lib/env.ml)
+$ (cd _build/default && /home/nicola/.opam/default/bin/ocamlopt.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -I src/lib/.homework_1.objs/byte -I src/lib/.homework_1.objs/native -intf-suffix .ml -no-alias-deps -opaque -open Homework_1 -o src/lib/.homework_1.objs/native/homework_1__Ast.cmx -c -impl src/lib/ast.ml)
+$ (cd _build/default && /home/nicola/.opam/default/bin/ocamlc.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -bin-annot -I src/lib/.homework_1.objs/byte -no-alias-deps -opaque -open Homework_1 -o src/lib/.homework_1.objs/byte/homework_1__Interpreter.cmo -c -impl src/lib/interpreter.ml)
+$ (cd _build/default && /home/nicola/.opam/default/bin/ocamlc.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -bin-annot -I src/bin/.main.eobjs/byte -I src/lib/.homework_1.objs/byte -no-alias-deps -opaque -o src/bin/.main.eobjs/byte/dune__exe__Main.cmi -c -intf src/bin/main.mli)
+$ (cd _build/default && /home/nicola/.opam/default/bin/ocamlopt.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -I src/bin/.main.eobjs/byte -I src/bin/.main.eobjs/native -I src/lib/.homework_1.objs/byte -I src/lib/.homework_1.objs/native -intf-suffix .ml -no-alias-deps -opaque -o src/bin/.main.eobjs/native/dune__exe__Main.cmx -c -impl src/bin/main.ml)
+$ (cd _build/default && /home/nicola/.opam/default/bin/ocamlopt.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -I src/lib/.homework_1.objs/byte -I src/lib/.homework_1.objs/native -intf-suffix .ml -no-alias-deps -opaque -open Homework_1 -o src/lib/.homework_1.objs/native/homework_1__Interpreter.cmx -c -impl src/lib/interpreter.ml)
+$ (cd _build/default && /home/nicola/.opam/default/bin/ocamlopt.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -a -o src/lib/homework_1.cmxa src/lib/.homework_1.objs/native/homework_1.cmx src/lib/.homework_1.objs/native/homework_1__Env.cmx src/lib/.homework_1.objs/native/homework_1__Ast.cmx src/lib/.homework_1.objs/native/homework_1__Interpreter.cmx)
+$ (cd _build/default && /home/nicola/.opam/default/bin/ocamlopt.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -o src/bin/main.exe src/lib/homework_1.cmxa src/bin/.main.eobjs/native/dune__exe__Main.cmx)
