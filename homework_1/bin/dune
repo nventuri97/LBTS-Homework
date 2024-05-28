@@ -1,4 +1,0 @@
-(executable
- (public_name homework_1)
- (name main)
- (libraries homework_1))
