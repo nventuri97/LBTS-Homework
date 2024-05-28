@@ -149,8 +149,8 @@ let print_trustedEnv (env : 'v trustedList) =
 let print_eval (ris : value * bool) =
   (*Just to display on the terminal the evaluation result*)
   match ris with
-  | Int u, t -> Printf.printf "Result: Int %d, Taintness: %b\n" u t
-  | Bool u, t -> Printf.printf "Result: Bool %b, Taintness: %b \n" u t
-  | String u, t -> Printf.printf "Result: String %s, Taintness: %b\n" u t
-  | Block (_, _), _ -> Printf.printf "Result: Block created succesfully\n"
-  | _ -> Printf.printf "Closure\n"
+  | Int u, t -> Printf.printf " Result: Int %d, Taintness: %b\n" u t
+  | Bool u, t -> Printf.printf " Result: Bool %b, Taintness: %b \n" u t
+  | String u, t -> Printf.printf " Result: String %s, Taintness: %b\n" u t
+  | Block (_, _), _ -> Printf.printf " Result: Block created succesfully\n"
+  | _ -> Printf.printf " Closure\n"
