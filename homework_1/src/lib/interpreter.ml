@@ -20,7 +20,6 @@ let rec evalTrustContent (tc : trustContent) (env : value env)
       let newEnv = extend env id id_value taintness in
       evalTrustContent next newEnv newTrustList eval
   | Handle (id, next) ->
-      (*aggiungere il caso in cui quello che chiama la id non utilizzi cose trusted*)
       if isIn id (getSecret te) then failwith "can't declare handle a secret"
       else if isIn id (getTrust te) then
         let addhandle = id :: getHandle te in
@@ -89,11 +88,11 @@ let rec eval (e : expr) (env : value env) (t : bool) (te : value trustedList) :
       let fClosure, tClosure = eval eFun env t te in
       match fClosure with
       | Closure (x, fBody, fDeclEnv, te) ->
-          (* xVal is evaluated in the current *)
+          (* xVal is evaluated in the current env *)
           let xVal, taintness = eval eArg env tClosure te in
-          let fBodyEnv = (x, xVal, taintness) :: fDeclEnv in
-          (* fBody is evaluated in the updated *)
-          eval fBody fBodyEnv taintness te
+            let fBodyEnv = (x, xVal, taintness) :: fDeclEnv in
+              (* fBody is evaluated in the updated env *)
+              eval fBody fBodyEnv taintness te
       | _ -> failwith "eval Call: not a function")
   | Abort msg -> failwith msg
   | TrustBlock tc ->
@@ -103,12 +102,12 @@ let rec eval (e : expr) (env : value env) (t : bool) (te : value trustedList) :
         (trustBlockEval, false)
   | TrustedVar x ->
       if isIn x (getTrust te) then (lookup env x, taint_lookup env x)
-      else failwith ("This ide " ^ x ^ " doesn't exist or it belongs to another env")
+      else failwith ("The ide " ^ x ^ " doesn't exist or it belongs to another env")
   | Include iBody -> (
       match iBody with
-      | Include _ -> failwith "you cant include inside an include"
+      | Include _ -> failwith "Cannot nest include blocks"
       | TrustBlock _ ->
-          failwith "you cant create A trustBlock inside an include"
+          failwith "Cannot create TrustBlocks inside an Include"
       | _ -> (ClosureInclude (iBody, env), t))
   | Execute extCode -> (
       let fClosure, _ = eval extCode env t te in

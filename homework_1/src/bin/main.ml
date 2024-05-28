@@ -13,7 +13,12 @@ let execWithFailure test env t list =
   assert (value = Bool false && success = false)
 ;;
 
-print_string "-------------------------------------------------------------------------------------\n";;
+let print_separator() =
+  print_string "-------------------------------------------------------------------------------------\n"
+;;
+
+(* Accessing public trusted value y inside a normal code block, in which we also have a plugin that doesnt use trusted values *)
+print_separator();;
 print_string " Test_0\n"
 let test_TU = eval(
     Let("mytrustB",
@@ -45,9 +50,9 @@ let test_TU = eval(
     )
 ) env false list;;
 print_eval test_TU;;
+print_separator();;
 
-print_string "-------------------------------------------------------------------------------------\n";;
-(* questo test stampa (6, false) e mi torna perché l'ultimo valore è untainted *)
+(* Same as before, but this time we show the taintness of the included code *)
 print_string " Test_1\n"
 let test_TU_1 = eval(
     Let("mytrustB",
@@ -73,49 +78,16 @@ let test_TU_1 = eval(
                 ),
                 Assign("plainCode", Execute(Var "extCode"))
             ),
-            CstI 6
+            Var("plainCode")
         )
     )
 ) env false list;;
 print_eval test_TU_1;;
+print_separator();;
 
-print_string "-------------------------------------------------------------------------------------\n";;
-(* questo test stampa (3, false) e mi torna perché lo stesso y non è stata toccata da nessun valore tainted *)
+(* Testing Execute on Include Block *)
 print_string " Test_2\n"
 let test_TU_2 = eval(
-    Let("mytrustB",
-        TrustBlock(
-            LetSecret("x",
-                CstI 1,
-                LetPublic("y",
-                    CstI 3,
-                    Handle("y", EndTrustBlock)
-                )
-            )
-        ),
-        Let("plainCode",
-            Let("extCode",
-                Include(
-                    Let("a",
-                        CstI 5,
-                        Let ("b",
-                            CstI 2,
-                            Prim ("*", Var "b", Var "a")
-                        )
-                    )
-                ),
-                Assign("plainCode", Execute(Var "extCode"))
-            ),
-            AccessTrust(Var "mytrustB", Var "y")
-        )
-    )
-) env false list;;
-print_eval test_TU_2;;
-
-print_string "-------------------------------------------------------------------------------------\n";;
-(* questo test stampa (10, true) e mi torna perché l'ultimo valore valutato è 5*2 nella execute, quindi tainted *)
-print_string " Test_3\n"
-let test_TU_3 = eval(
     Let("mytrustB",
         TrustBlock(
             LetSecret("x",
@@ -143,11 +115,11 @@ let test_TU_3 = eval(
         )
     )
 ) env false list;;
-print_eval test_TU_3;;
+print_eval test_TU_2;;
+print_separator();;
 
-print_string "-------------------------------------------------------------------------------------\n";;
-(* questo test fallisce al momento della Execute perché cerco di chiamare y all'interno della Include *)
-print_string " Test_4\n";;
+(* Executing a plugin code that tries to access trusted values *)
+print_string " Test_3\n";;
 execWithFailure(
     Let("mytrustB",
         TrustBlock(
@@ -176,10 +148,11 @@ execWithFailure(
         )
     )
 ) env false list;;
+print_separator();;
 
-print_string "-------------------------------------------------------------------------------------\n";;
-print_string " Test_5\n"
-let test_TU_5 = eval(
+(* Calling a trusted public function *)
+print_string " Test_4\n"
+let test_TU_4 = eval(
     Let("mytrustB",
         TrustBlock(
             LetSecret("x",
@@ -195,11 +168,11 @@ let test_TU_5 = eval(
         Call (AccessTrust (Var "mytrustB", Var "f"), CstI 2)
     )
 ) env false list;;
-print_eval test_TU_5;;
+print_eval test_TU_4;;
+print_separator();;
 
-print_string "-------------------------------------------------------------------------------------\n";;
-(* questa deve fallire *)
-print_string " Test_6\n";;
+(* Calling a trusted public function inside a plugin *)
+print_string " Test_5\n";;
 execWithFailure(
     Let("mytrustB",
         TrustBlock(
@@ -224,11 +197,11 @@ execWithFailure(
         )
     )
 ) env false list;;
+print_separator();;
 
-print_string "-------------------------------------------------------------------------------------\n";;
 (* TrustedVar used inside a trust block *)
-print_string " Test_7\n"
-let test_TU_7 = eval(
+print_string " Test_6\n"
+let test_TU_6 = eval(
     Let("mytrustB",
         TrustBlock(
             LetPublic("x",
@@ -241,11 +214,11 @@ let test_TU_7 = eval(
         AccessTrust(Var "mytrustB", Var "f")
     )
 ) env false list;;
-print_eval test_TU_7;;
+print_eval test_TU_6;;
+print_separator();;
 
-print_string "-------------------------------------------------------------------------------------\n";;
-(* Cant declare handle a secret *)
-print_string " Test_8\n";;
+(* Cant declare handle of a secret value *)
+print_string " Test_7\n";;
 execWithFailure(
     Let("mytrustB",
         TrustBlock(
@@ -260,10 +233,10 @@ execWithFailure(
         AccessTrust (Var "mytrustB", Var "x")
     )
 ) env false list;;
+print_separator();;
 
-print_string "-------------------------------------------------------------------------------------\n";;
-(*TrusteVar outside a trustBlock*)
-print_string " Test_9\n";;
+(* TrustedVar outside a trustBlock*)
+print_string " Test_8\n";;
 execWithFailure(
     Let("mytrustB",
         TrustBlock(
@@ -278,11 +251,10 @@ execWithFailure(
         Assign ("PlainT", TrustedVar "x")
     )
 ) env false list;;
+print_separator();;
 
-
-print_string "-------------------------------------------------------------------------------------\n";;
-(*trustBlock inside an include*)
-print_string " Test_10\n";;
+(* Trying to create a TrustBlock inside an Include *)
+print_string " Test_9\n";;
 execWithFailure(
     Let("myUtrustB",
         Include(
@@ -293,10 +265,10 @@ execWithFailure(
         Execute (Var "myUtrustB")
     )
 ) env false list;;
+print_separator();;
 
-print_string "-------------------------------------------------------------------------------------\n";;
-(*include inside an include*)
-print_string " Test_11\n";;
+(* Trying to nest include blocks *)
+print_string " Test_10\n";;
 execWithFailure(
     Let("myUtrustB",
         Include(
@@ -310,11 +282,11 @@ execWithFailure(
         Execute (Var "myUtrustB")
     )
 ) env false list;;
+print_separator();;
 
-print_string "-------------------------------------------------------------------------------------\n";;
-(*This should work but we are multipling a tainted value with an untainted one, still no trust block involved*)
-print_string " Test_12\n"
-let test_TU_12 = eval(
+(* Testing of multiplication between a tainted value and an untainted one, still no trust block involved *)
+print_string " Test_11\n"
+let test_TU_11 = eval(
     Let("mytrustB",
         TrustBlock(
             LetSecret("x",
@@ -345,12 +317,12 @@ let test_TU_12 = eval(
         )
     )
 ) env false list;;
-print_eval test_TU_12;;
+print_eval test_TU_11;;
+print_separator();;
 
-print_string "-------------------------------------------------------------------------------------\n";;
 (* Testing Assert in normal code *)
-print_string " Test_13\n"
-let test_TU_13 = eval(
+print_string " Test_12\n"
+let test_TU_12 = eval(
     Let ("code",
         Let ("x",
             CstI 2,
@@ -359,11 +331,11 @@ let test_TU_13 = eval(
         Assert "code"
     )
 ) env false list;;
-print_eval test_TU_13;;
+print_eval test_TU_12;;
+print_separator();;
 
-print_string "-------------------------------------------------------------------------------------\n";;
 (* Testing Assert on Untrusted Block *)
-print_string " Test_14\n";;
+print_string " Test_13\n";;
 execWithFailure(
     Let("plugin",
         Include(
@@ -381,8 +353,24 @@ execWithFailure(
         )
     )
 ) env false list;;
+print_separator();;
 
-print_string "-------------------------------------------------------------------------------------\n";;
+(* Testing Assert on a function *)
+print_string " Test_14\n";;
+let test_TU_14 = eval(
+    Let("x",
+        CstI 1,
+        Let("f",
+            Fun ("y",
+                Prim ("-", Assert "y", Assert "x")
+            ),
+            Call(Assert "f", CstI 2)
+        )
+    )
+) env false list;;
+print_eval(test_TU_14);;
+print_separator();;
+
 print_string " Test_15\n";;
 let test_TU_15 = eval(
     Let("mytrustB",
@@ -401,4 +389,4 @@ let test_TU_15 = eval(
     )
   ) env false list;;
 print_eval(test_TU_15);;
-print_string "-------------------------------------------------------------------------------------\n";;
+print_separator();;

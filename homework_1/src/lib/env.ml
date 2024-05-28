@@ -1,16 +1,13 @@
-(*
-   Variable identifiers are strings
-*)
+(* Variable identifiers are strings *)
 type ide = string
 
 (*
    An environment is a map from identifier to a value (what the identifier is bound to).
-   For simplicity we represent the environment as an association list, i.e., a list of pair (identifier, data).
+   For simplicity we represent the environment as an association list, i.e., a list of pair (identifier, data). 
 *)
-(* type 'v env = (ide * 'v * bool) list *)
 type 'v env = (ide * 'v * bool) list
 
-(*To extend an environment*)
+(* To extend an environment *)
 let extend (e : 'v env) (id : ide) (v : 'v) (t : bool) : 'v env =
   (id, v, t) :: e
 
@@ -23,6 +20,7 @@ let rec lookup env x =
   | [] -> failwith (x ^ " not found")
   | (y, v, _) :: r -> if x = y then v else lookup r x
 
+(* Same as lookup, but returns the taintness boolean linked to the {x} identifier *)
 let rec taint_lookup env x =
   match env with
   | [] -> failwith (x ^ " not found")
@@ -36,6 +34,7 @@ type secret = ide list
 (*Sublist of trusted that contains the indentificators of the function defined
   as handle within a trustblock*)
 type handleList = ide list
+
 type 'v trustedList = trusted * secret * handleList
 
 let rec isIn (x : 'v) (l : 'v list) : bool =
