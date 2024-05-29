@@ -2,8 +2,8 @@ open Ast
 open Env
 
 let rec evalTrustContent (tc : trustContent) (env : value env)
-    (te : value trustedList)
-    (eval : expr -> value env -> bool -> value trustedList -> value * bool) :
+    (te : value secureTuple)
+    (eval : expr -> value env -> bool -> value secureTuple -> value * bool) :
     value =
   match tc with
   | LetSecret (id, exprRight, next) ->
@@ -28,7 +28,7 @@ let rec evalTrustContent (tc : trustContent) (env : value env)
       else failwith "can't add to handle list a variable not trusted"
   | EndTrustBlock -> Block (te, env)
 
-let rec eval (e : expr) (env : value env) (t : bool) (te : value trustedList) :
+let rec eval (e : expr) (env : value env) (t : bool) (te : value secureTuple) :
     value * bool =
   match e with
   | CstI i -> (Int i, t)
@@ -135,13 +135,13 @@ let print_ide_list ide_list =
     ide_list;
   print_newline ()
 
-let print_trustedEnv (env : 'v trustedList) =
+let print_trustedEnv (env : 'v secureTuple) =
   let t, s, h = env in
   print_string "Trusted: ";
   print_ide_list t;
   print_string "Secret: ";
   print_ide_list s;
-  print_string "HandleList: ";
+  print_string "Handled: ";
   print_ide_list h;
   print_newline ()
 

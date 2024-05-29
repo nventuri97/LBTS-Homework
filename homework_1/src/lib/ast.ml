@@ -32,6 +32,6 @@ type value =
   | Int of int
   | Bool of bool
   | String of string
-  | Closure of ide * expr * value env * value trustedList
+  | Closure of ide * expr * value env * value secureTuple
   | ClosureInclude of expr * value env
-  | Block of value trustedList * value env
+  | Block of value secureTuple * value env
