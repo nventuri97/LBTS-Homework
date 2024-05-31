@@ -390,3 +390,32 @@ let test_TU_15 = eval(
   ) env false list;;
 print_eval(test_TU_15);;
 print_separator();;
+
+(* Testing AccessTrust on a variable that isnt handled *)
+print_string " Test_16\n";;
+execWithFailure(
+    Let("mytrustB",
+        TrustBlock(
+            LetSecret("x", CstI 1,
+                LetPublic("c", CstI 2,
+                    LetPublic("y", CstI 3,
+                        Handle("y", EndTrustBlock)
+                    )
+                )
+            )
+        ),
+        Let("plainCode",
+            Let("extCode",
+                Include(Let("a", CstI 5,
+                            Let("b", CstI 5,
+                                Prim("*", Var("b"), Var("a"))
+                               )
+                           )
+                       ),
+                Assign("plainCode", Execute(Var("extCode")))
+            ),
+            AccessTrust(Var("mytrustB"), Var("c"))
+        )
+    )
+) env false list;;
+print_separator();;
