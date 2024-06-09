@@ -6,19 +6,25 @@ let rec evalTrustContent (tc : trustContent) (env : value env)
     (eval : expr -> value env -> bool -> value secureTuple -> value * bool) :
     value =
   match tc with
-  | LetSecret (id, exprRight, next) ->
+  | LetSecret (id, exprRight, next) ->(
+    match exprRight with
+    | TrustBlock (_) -> failwith "can't create a trustblock inside a trustblock"
+    | _ ->
       let addsec = id :: getSecret te in
       let addTrust = id :: getTrust te in
       let newSeclist = build addTrust addsec (getHandle te) in
       let id_value, taintness = eval exprRight env false newSeclist in
       let newEnv = extend env id id_value taintness in
-      evalTrustContent next newEnv newSeclist eval
-  | LetPublic (id, exprRight, next) ->
+      evalTrustContent next newEnv newSeclist eval)
+  | LetPublic (id, exprRight, next) ->(
+    match exprRight with
+    | TrustBlock (_) -> failwith "can't create a trustblock inside a trustblock"
+    | _ ->(
       let addtrus = id :: getTrust te in
       let newTrustList = build addtrus (getSecret te) (getHandle te) in
       let id_value, taintness = eval exprRight env false newTrustList in
       let newEnv = extend env id id_value taintness in
-      evalTrustContent next newEnv newTrustList eval
+      evalTrustContent next newEnv newTrustList eval))
   | Handle (id, next) ->
       if isIn id (getSecret te) then failwith "can't declare handle a secret"
       else if isIn id (getTrust te) then
@@ -27,6 +33,9 @@ let rec evalTrustContent (tc : trustContent) (env : value env)
         evalTrustContent next env newTrustList eval
       else failwith "can't add to handle list a variable not trusted"
   | EndTrustBlock -> Block (te, env)
+
+let env = []
+let list = ([], [], [])
 
 let rec eval (e : expr) (env : value env) (t : bool) (te : value secureTuple) :
     value * bool =
@@ -144,6 +153,9 @@ let print_trustedEnv (env : 'v secureTuple) =
   print_string "Handled: ";
   print_ide_list h;
   print_newline ()
+
+
+ let feval (t: expr)= eval t env false list
 
 let print_eval (ris : value * bool) =
   (*Just to display on the terminal the evaluation result*)

@@ -1,11 +1,8 @@
 open Homework_1.Interpreter
 
-let env = []
-let list = ([], [], [])
-
-let execWithFailure test env t list =
+let execWithFailure test=
   let value, success =
-    try eval test env t list
+    try  feval test
     with Failure msg ->
       Printf.printf " Test Failed with exception:\027[31m %s\n\027[0m" msg;
       (Bool false, false)
@@ -20,11 +17,11 @@ let print_separator() =
 (* Accessing public trusted value y inside a normal code block, in which we also have a plugin that doesnt use trusted values *)
 print_separator();;
 print_string " Test_0\n"
-let test_TU = eval(
+let test_TU =  feval(
     Let("mytrustB",
         TrustBlock(
             LetSecret("x",
-                CstI 1,
+                CstI 3,
                 LetPublic("y",
                     CstI 3,
                     Handle("y",
@@ -48,13 +45,13 @@ let test_TU = eval(
             AccessTrust(Var "mytrustB", Var "y")
         )
     )
-) env false list;;
+)  ;;
 print_eval test_TU;;
 print_separator();;
 
 (* Same as before, but this time we show the taintness of the included code *)
 print_string " Test_1\n"
-let test_TU_1 = eval(
+let test_TU_1 = feval(
     Let("mytrustB",
         TrustBlock(
             LetSecret("x",
@@ -81,13 +78,13 @@ let test_TU_1 = eval(
             Var("plainCode")
         )
     )
-) env false list;;
+)  ;;
 print_eval test_TU_1;;
 print_separator();;
 
 (* Testing Execute on Include Block *)
 print_string " Test_2\n"
-let test_TU_2 = eval(
+let test_TU_2 = feval(
     Let("mytrustB",
         TrustBlock(
             LetSecret("x",
@@ -114,7 +111,7 @@ let test_TU_2 = eval(
             )
         )
     )
-) env false list;;
+)  ;;
 print_eval test_TU_2;;
 print_separator();;
 
@@ -147,12 +144,12 @@ execWithFailure(
             )
         )
     )
-) env false list;;
+)  ;;
 print_separator();;
 
 (* Calling a trusted public function *)
 print_string " Test_4\n"
-let test_TU_4 = eval(
+let test_TU_4 = feval(
     Let("mytrustB",
         TrustBlock(
             LetSecret("x",
@@ -167,7 +164,7 @@ let test_TU_4 = eval(
         ),
         Call (AccessTrust (Var "mytrustB", Var "f"), CstI 2)
     )
-) env false list;;
+)  ;;
 print_eval test_TU_4;;
 print_separator();;
 
@@ -196,12 +193,12 @@ execWithFailure(
             Execute(Var "extCode")
         )
     )
-) env false list;;
+)  ;;
 print_separator();;
 
 (* TrustedVar used inside a trust block *)
 print_string " Test_6\n"
-let test_TU_6 = eval(
+let test_TU_6 = feval(
     Let("mytrustB",
         TrustBlock(
             LetPublic("x",
@@ -213,7 +210,7 @@ let test_TU_6 = eval(
         ),
         AccessTrust(Var "mytrustB", Var "f")
     )
-) env false list;;
+)  ;;
 print_eval test_TU_6;;
 print_separator();;
 
@@ -232,7 +229,7 @@ execWithFailure(
         ),
         AccessTrust (Var "mytrustB", Var "x")
     )
-) env false list;;
+)  ;;
 print_separator();;
 
 (* TrustedVar outside a trustBlock*)
@@ -250,7 +247,7 @@ execWithFailure(
         ),
         Assign ("PlainT", TrustedVar "x")
     )
-) env false list;;
+)  ;;
 print_separator();;
 
 (* Trying to create a TrustBlock inside an Include *)
@@ -264,7 +261,7 @@ execWithFailure(
         ),
         Execute (Var "myUtrustB")
     )
-) env false list;;
+)  ;;
 print_separator();;
 
 (* Trying to nest include blocks *)
@@ -281,12 +278,12 @@ execWithFailure(
         ),
         Execute (Var "myUtrustB")
     )
-) env false list;;
+)  ;;
 print_separator();;
 
 (* Testing of multiplication between a tainted value and an untainted one, still no trust block involved *)
 print_string " Test_11\n"
-let test_TU_11 = eval(
+let test_TU_11 = feval(
     Let("mytrustB",
         TrustBlock(
             LetSecret("x",
@@ -316,13 +313,13 @@ let test_TU_11 = eval(
             )
         )
     )
-) env false list;;
+)  ;;
 print_eval test_TU_11;;
 print_separator();;
 
 (* Testing Assert in normal code *)
 print_string " Test_12\n"
-let test_TU_12 = eval(
+let test_TU_12 = feval(
     Let ("code",
         Let ("x",
             CstI 2,
@@ -330,7 +327,7 @@ let test_TU_12 = eval(
         ),
         Assert "code"
     )
-) env false list;;
+)  ;;
 print_eval test_TU_12;;
 print_separator();;
 
@@ -352,12 +349,12 @@ execWithFailure(
             Assert "exe"
         )
     )
-) env false list;;
+)  ;;
 print_separator();;
 
 (* Testing Assert on a function *)
 print_string " Test_14\n";;
-let test_TU_14 = eval(
+let test_TU_14 = feval(
     Let("x",
         CstI 1,
         Let("f",
@@ -367,12 +364,12 @@ let test_TU_14 = eval(
             Call(Assert "f", CstI 2)
         )
     )
-) env false list;;
+)  ;;
 print_eval(test_TU_14);;
 print_separator();;
 
 print_string " Test_15\n";;
-let test_TU_15 = eval(
+let test_TU_15 = feval(
     Let("mytrustB",
         TrustBlock(
             LetSecret("x",
@@ -387,23 +384,18 @@ let test_TU_15 = eval(
         ),
         Call(AccessTrust(Var("mytrustB"), Var("CheckPassword")), CstString "abcd")
     )
-  ) env false list;;
+  )  ;;
 print_eval(test_TU_15);;
 print_separator();;
-
-(* Testing AccessTrust on a variable that isnt handled *)
-print_string " Test_16\n";;
+print_string "Test_16\n";;
 execWithFailure(
-    Let("mytrustB",
-        TrustBlock(
-            LetSecret("x", CstI 1,
-                LetPublic("c", CstI 2,
-                    LetPublic("y", CstI 3,
-                        Handle("y", EndTrustBlock)
-                    )
-                )
-            )
-        ),
+    Let("mytrustB", 
+        TrustBlock(LetSecret("x", CstI 1,
+                    LetPublic("c", CstI 2,
+                   LetPublic("y", CstI 3,
+                   Handle("y", EndTrustBlock)
+                   )))
+                  ),
         Let("plainCode",
             Let("extCode",
                 Include(Let("a", CstI 5,
@@ -413,9 +405,9 @@ execWithFailure(
                            )
                        ),
                 Assign("plainCode", Execute(Var("extCode")))
-            ),
+               ),
             AccessTrust(Var("mytrustB"), Var("c"))
-        )
-    )
-) env false list;;
-print_separator();;
+           )
+       )
+  )  ;;
+  print_separator();;
