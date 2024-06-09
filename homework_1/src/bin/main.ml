@@ -411,3 +411,33 @@ execWithFailure(
        )
   )  ;;
   print_separator();;
+  print_string "Test_17\n";;
+  execWithFailure(
+    Let("mytrustB",
+        TrustBlock(
+            LetSecret("x",
+                TrustBlock(EndTrustBlock),
+                LetPublic("y",
+                    CstI 3,
+                    Handle("y",
+                        EndTrustBlock)
+                )
+            )
+        ),
+        Let("plainCode",
+            Let("extCode",
+                Include(
+                    Let("a",
+                        CstI 5,
+                        Let("b",
+                            CstI 5,
+                            Prim ("*", Var "b", Var "a")
+                        )
+                    )
+                ),
+                Assign("plainCode", Execute(Var "extCode"))
+            ),
+            AccessTrust(Var "mytrustB", Var "y")
+        )
+    )
+)  ;;
